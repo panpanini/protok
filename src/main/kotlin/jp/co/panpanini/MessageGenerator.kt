@@ -39,6 +39,10 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
             constructor.addParameter(it.name, it.type)
             typeSpec.addProperty(it)
         }
+        // unknown fields
+       val unknownPropertySpec = unknownFieldSpec()
+        constructor.addParameter(unknownPropertySpec.name, unknownPropertySpec.type)
+        typeSpec.addProperty(unknownPropertySpec)
 
         typeSpec.primaryConstructor(constructor.build())
 
@@ -55,7 +59,15 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
     }
 
 
-
+    private fun unknownFieldSpec(): PropertySpec {
+        val unknownFieldClass = ClassName("pbandk", "UnknownField")
+        return PropertySpec.builder(
+                "unknownFields" ,
+                Map::class.asClassName().parameterizedBy(Int::class.asClassName(), unknownFieldClass)
+        )
+                .initializer("unknownFields")
+                .build()
+    }
 
 
     private val File.Type.Message.mapEntryKeyKotlinType get() =
