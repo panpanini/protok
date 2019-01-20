@@ -84,7 +84,7 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
                     fieldBlock
                             .beginControlFlow("if (${it.getNonDefaultCheck()})")
                             .add("protoSize += ")
-                            .add(it.sizeExpression())
+                            .addStatement(it.sizeExpression().toString())
                             .endControlFlow()
                 }
             }
