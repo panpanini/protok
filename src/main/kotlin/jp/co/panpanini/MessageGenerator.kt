@@ -3,6 +3,7 @@ package jp.co.panpanini
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import pbandk.Message
+import pbandk.UnknownField
 import pbandk.gen.File
 
 class MessageGenerator(private val file: File, private val kotlinTypeMappings: Map<String, String>) {
@@ -61,10 +62,9 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
 
 
     private fun unknownFieldSpec(): PropertySpec {
-        val unknownFieldClass = ClassName("pbandk", "UnknownField")
         return PropertySpec.builder(
                 "unknownFields" ,
-                Map::class.asClassName().parameterizedBy(Int::class.asClassName(), unknownFieldClass)
+                Map::class.parameterizedBy(Int::class, UnknownField::class)
         )
                 .initializer("unknownFields")
                 .build()
