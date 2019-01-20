@@ -2,7 +2,9 @@ package jp.co.panpanini
 
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
+import pbandk.Marshaller
 import pbandk.Message
+import pbandk.Sizer
 import pbandk.UnknownField
 import pbandk.gen.File
 
@@ -57,6 +59,7 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
             typeSpec.addType(it)
         }
         typeSpec.addFunction(createMessageSizeExtension(type, className))
+        typeSpec.addFunction(createMessageMarshalExtension(type, className))
         return typeSpec.build()
     }
 
@@ -69,6 +72,72 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
                 .initializer("unknownFields")
                 .build()
     }
+
+    private fun createMessageMarshalExtension(type: File.Type.Message, typeName: ClassName): FunSpec {
+        val marshalParameter = ParameterSpec.builder("protoMarshal", Marshaller::class).build()
+        val funSpec = FunSpec.builder("protoMarshalImpl")
+                .receiver(typeName)
+                .addParameter(marshalParameter)
+
+        // write all non-default fields
+        val codeBlock = CodeBlock.builder()
+        type.sortedStandardFieldsWithOneOfs()
+                .map { (field, oneOf) ->
+                    if (oneOf == null) {
+                        // standard field
+                        CodeBlock.builder()
+                                .beginControlFlow("if (${field.getNonDefaultCheck()})")
+                                .addStatement(field.writeExpressionToMarshaller(marshalParameter.name))
+                                .endControlFlow()
+                                .build()
+                    } else {
+                        val subclassName = "${typeName.canonicalName}.${oneOf.kotlinTypeName}.${oneOf.kotlinFieldTypeNames[field.name]}"
+
+                        CodeBlock.builder()
+                                .beginControlFlow("if (%s is %s)", oneOf.kotlinFieldName, subclassName)
+                                .addStatement(field.writeExpressionToMarshaller(marshalParameter.name, "${oneOf.kotlinFieldName}.${field.kotlinFieldName}"))
+                                .endControlFlow()
+                                .build()
+
+                    }
+                }
+                .forEach { codeBlock.add(it) }
+        // unknownFields
+        codeBlock.beginControlFlow("if (unknownFields.isNotEmpty())")
+                .addStatement("${marshalParameter.name}.writeUnknownFields(unknownFields)")
+                .endControlFlow()
+
+        funSpec.addCode(codeBlock.build())
+
+        return funSpec.build()
+    }
+
+    private fun File.Field.Standard.writeExpressionToMarshaller(marshaller: String, reference: String = kotlinFieldName): String {
+        val codeBlock = CodeBlock.builder()
+        when {
+            map -> {
+                codeBlock.addStatement("$marshaller.writeMap($tag, $reference, ${mapConstructorReference()})")
+            }
+            repeated && packed -> {
+                codeBlock.addStatement("$marshaller.writeTag($tag).writePackedRepeated($reference, %T::${type.sizeMethod}, $marshaller::${type.writeMethod})", Sizer::class)
+            }
+            repeated -> {
+                codeBlock.addStatement("$reference.forEach { $marshaller.writeTag($tag).${type.writeMethod}(it) }")
+            }
+            else -> {
+                codeBlock.addStatement("$marshaller.writeTag($tag).${type.writeMethod}($reference)")
+            }
+        }
+        return codeBlock.build().toString()
+    }
+
+    private fun File.Type.Message.sortedStandardFieldsWithOneOfs() =
+            fields.flatMap {
+                when (it) {
+                    is File.Field.Standard -> listOf(it to null)
+                    is File.Field.OneOf -> it.fields.map { f -> f to it }
+                }
+            }.sortedBy { (field, _) ->  field.number }
 
     private fun createMessageSizeExtension(type: File.Type.Message, typeName: ClassName): FunSpec {
         val funSpec = FunSpec.builder("protoSizeImpl")
@@ -256,5 +325,21 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
         File.Field.Type.STRING -> String::class.asTypeName()
         File.Field.Type.UINT32 -> Int::class.asTypeName()
         File.Field.Type.UINT64 -> Long::class.asTypeName()
+    }
+
+    protected val pbandk.gen.File.Field.Type.writeMethod get() = "write" + string.capitalize()
+
+
+    private val File.Field.Standard.tag get() = (number shl 3) or when {
+        repeated && packed -> 2
+        else -> type.wireFormat
+    }
+
+    private val File.Field.Type.wireFormat get() = when (this) {
+        File.Field.Type.BOOL, File.Field.Type.ENUM, File.Field.Type.INT32, File.Field.Type.INT64,
+        File.Field.Type.SINT32, File.Field.Type.SINT64, File.Field.Type.UINT32, File.Field.Type.UINT64 -> 0
+        File.Field.Type.BYTES, File.Field.Type.MESSAGE, File.Field.Type.STRING -> 2
+        File.Field.Type.DOUBLE, File.Field.Type.FIXED64, File.Field.Type.SFIXED64 -> 1
+        File.Field.Type.FIXED32, File.Field.Type.FLOAT, File.Field.Type.SFIXED32 -> 5
     }
 }
