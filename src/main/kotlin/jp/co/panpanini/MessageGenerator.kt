@@ -2,10 +2,7 @@ package jp.co.panpanini
 
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
-import pbandk.Marshaller
-import pbandk.Message
-import pbandk.Sizer
-import pbandk.UnknownField
+import pbandk.*
 import pbandk.gen.File
 
 class MessageGenerator(private val file: File, private val kotlinTypeMappings: Map<String, String>) {
@@ -60,6 +57,7 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
         }
         typeSpec.addFunction(createMessageSizeExtension(type, className))
         typeSpec.addFunction(createMessageMarshalExtension(type, className))
+        typeSpec.addFunction(createMessageUnmarshalExtension(type, className))
         return typeSpec.build()
     }
 
@@ -72,6 +70,138 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
                 .initializer("unknownFields")
                 .build()
     }
+
+
+    private fun File.Field.Standard.unmarshalLocalVar(): CodeBlock {
+        val codeBlock = CodeBlock.builder()
+
+        when {
+            repeated -> {
+                mapEntry().let {
+                    if (it == null) {
+                        codeBlock.addStatement("var $kotlinFieldName: %T = null", ListWithSize.Builder::class.asTypeName().parameterizedBy(kotlinQualifiedTypeName).copy(nullable = true))
+                    } else {
+                        codeBlock.addStatement("var $kotlinFieldName: ${kotlinValueType(true)} = $defaultValue")
+                    }
+                }
+            }
+            requiresExplicitTypeWithVal -> {
+                codeBlock.addStatement("var $kotlinFieldName: ${kotlinValueType(true)} = $defaultValue")
+            }
+            else -> {
+                codeBlock.addStatement("var $kotlinFieldName = $defaultValue")
+            }
+        }
+        return codeBlock.build()
+    }
+
+    private val File.Field.Standard.requiresExplicitTypeWithVal get() =
+        repeated || (file.version == 2 && optional) || type.requiresExplicitTypeWithVal
+
+    private val File.Field.Type.requiresExplicitTypeWithVal get() =
+        this == File.Field.Type.BYTES || this == File.Field.Type.ENUM || this == File.Field.Type.MESSAGE
+
+    //TODO
+    private val File.Field.Standard.unmarshalVarDone get() =
+        when {
+            map -> "pbandk.MessageMap.Builder.fixed($kotlinFieldName)"
+            repeated -> "pbandk.ListWithSize.Builder.fixed($kotlinFieldName)"
+            else -> kotlinFieldName
+        }
+
+    private val File.Field.Standard.defaultValue get() = when {
+        map -> "emptyMap()"
+        repeated -> "emptyList()"
+        file.version == 2 && optional -> "null"
+        type == File.Field.Type.ENUM -> "$kotlinQualifiedTypeName.fromValue(0)"
+        else -> type.defaultValue
+    }
+
+    private fun createMessageUnmarshalExtension(type: File.Type.Message, typeName: ClassName): FunSpec {
+        val companion = ClassName("", "Companion")
+        val unMarshalParameter = ParameterSpec.builder("protoUnmarshal", Unmarshaller::class).build()
+        val funSpec = FunSpec.builder("protoUnmarshal")
+                .returns(typeName)
+                .receiver(companion)
+                .addParameter(unMarshalParameter)
+
+        // local variables
+        val codeBlock = CodeBlock.builder()
+
+        val doneKotlinFields = type.fields.map {
+            when (it) {
+                is File.Field.Standard -> {
+                    Pair(it.unmarshalLocalVar(), it.unmarshalVarDone)
+                }
+                is File.Field.OneOf -> {
+                    Pair(CodeBlock.builder()
+                            .addStatement("var ${it.kotlinTypeName}: $typeName.${it.kotlinTypeName}? = null")
+                            .build(),
+                            it.kotlinFieldName)
+                }
+            }
+        }.map { (code, unmarshalVar) ->
+            codeBlock.add(code)
+            unmarshalVar
+        }
+
+        //TODO: clean this up - its a little difficult to follow. maybe create a function for it
+        codeBlock.beginControlFlow("while (true)")
+        codeBlock.beginControlFlow("when (${unMarshalParameter.name}.readTag())")
+                .addStatement("0 -> ${typeName.simpleName}(${doneKotlinFields.joinToString()}, ${unMarshalParameter.name}.unknownFields())")
+
+        type.sortedStandardFieldsWithOneOfs().map { (field, oneOf) ->
+            val tags = mutableListOf(field.tag)
+            val fieldBlock = CodeBlock.builder()
+            if (field.repeated) {
+                val tag = (field.number shl 3) or if (field.packed) field.type.wireFormat else 2
+                if (field.tag != tag) {
+                    tags.add(tag)
+                }
+            }
+                fieldBlock.add("${tags.joinToString()} -> ")
+                if (oneOf == null) {
+                    fieldBlock.addStatement("${field.kotlinFieldName} = ${field.unmarshalReadExpression}")
+                } else {
+                    val oneOfType = "${typeName.simpleName}.${oneOf.kotlinTypeName}.${oneOf.kotlinFieldTypeNames[field.name]}"
+                    require(!field.repeated)
+                    fieldBlock.addStatement("${oneOf.kotlinFieldName} = $oneOfType(${field.unmarshalReadExpression})")
+                }
+
+            fieldBlock.build()
+        }.forEach {
+            codeBlock.add(it)
+        }
+
+        codeBlock.addStatement(
+                "else -> ${unMarshalParameter.name}.unknownField()"
+        )
+        codeBlock.endControlFlow() // when
+        codeBlock.endControlFlow() // while
+
+        funSpec.addCode(codeBlock.build())
+        return funSpec.build()
+    }
+
+    protected val File.Field.Standard.unmarshalReadExpression get() = type.neverPacked.let { neverPacked ->
+        val repEnd = if (neverPacked) ", true" else ", false"
+        when (type) {
+            File.Field.Type.ENUM ->
+                if (repeated) "protoUnmarshal.readRepeatedEnum($kotlinFieldName, $kotlinQualifiedTypeName.Companion)"
+                else "protoUnmarshal.readEnum($kotlinQualifiedTypeName.Companion)"
+            File.Field.Type.MESSAGE ->
+                if (!repeated) "protoUnmarshal.readMessage($kotlinQualifiedTypeName.Companion)"
+                else if (map) "protoUnmarshal.readMap($kotlinFieldName, $kotlinQualifiedTypeName.Companion$repEnd)"
+                else "protoUnmarshal.readRepeatedMessage($kotlinFieldName, $kotlinQualifiedTypeName.Companion$repEnd)"
+            else -> {
+                if (repeated) "protoUnmarshal.readRepeated($kotlinFieldName, protoUnmarshal::${type.readMethod}$repEnd)"
+                else "protoUnmarshal.${type.readMethod}()"
+            }
+        }
+    }
+
+    protected val File.Field.Type.readMethod get() = "read" + string.capitalize()
+
 
     private fun createMessageMarshalExtension(type: File.Type.Message, typeName: ClassName): FunSpec {
         val marshalParameter = ParameterSpec.builder("protoMarshal", Marshaller::class).build()
