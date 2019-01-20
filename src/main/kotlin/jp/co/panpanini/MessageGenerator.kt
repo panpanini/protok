@@ -55,6 +55,7 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
         }.forEach {
             typeSpec.addType(it)
         }
+        typeSpec.addFunction(createMessageSizeExtension(type, className))
         return typeSpec.build()
     }
 
@@ -69,6 +70,124 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
                 .build()
     }
 
+    private fun createMessageSizeExtension(type: File.Type.Message, typeName: ClassName): FunSpec {
+        val funSpec = FunSpec.builder("protoSizeImpl")
+                .returns(Int::class)
+                .receiver(typeName)
+
+        val codeBlock = CodeBlock.builder()
+                .addStatement("var protoSize = 0")
+        type.fields.map {
+            val fieldBlock = CodeBlock.builder()
+            when(it) {
+                is File.Field.Standard -> {
+                    fieldBlock
+                            .beginControlFlow("if (${it.getNonDefaultCheck()})")
+                            .add("protoSize += ")
+                            .add(it.sizeExpression())
+                            .endControlFlow()
+                }
+            }
+
+            fieldBlock.build()
+        }.forEach {
+            codeBlock.add(it)
+        }
+        // unknownFields
+        codeBlock.addStatement("protoSize += unknownFields.entries.sumBy { it.value.size() }")
+
+        codeBlock.addStatement("return protoSize")
+
+        funSpec.addCode(codeBlock.build())
+
+        return funSpec.build()
+    }
+
+    private fun File.Field.Standard.sizeExpression(): CodeBlock {
+        val sizer = ClassName("pbandk", "Sizer")
+        val codeBlock = CodeBlock.builder()
+
+        when {
+            map -> {
+                codeBlock.add("%T.mapSize($number, $kotlinFieldName, ${mapConstructorReference()})", sizer)
+            }
+            repeated && packed -> {
+                codeBlock.add("%T.tagSize($number) + %T.packedRepeatedSize($kotlinFieldName, %T::${type.sizeMethod}", sizer, sizer, sizer)
+            }
+            repeated -> {
+                codeBlock.add("%T.tagSize($number) * $kotlinFieldName.size + $kotlinFieldName.sumBy(%T::${type.sizeMethod})", sizer, sizer)
+            }
+            else -> {
+                codeBlock.add("%T.tagSize($number) + %T.${type.sizeMethod}($kotlinFieldName)", sizer, sizer)
+            }
+
+
+        }
+        return codeBlock.build()
+    }
+
+    private val File.Field.Type.string get() = when (this) {
+        File.Field.Type.BOOL -> "bool"
+        File.Field.Type.BYTES -> "bytes"
+        File.Field.Type.DOUBLE -> "double"
+        File.Field.Type.ENUM -> "enum"
+        File.Field.Type.FIXED32 -> "fixed32"
+        File.Field.Type.FIXED64 -> "fixed64"
+        File.Field.Type.FLOAT -> "float"
+        File.Field.Type.INT32 -> "int32"
+        File.Field.Type.INT64 -> "int64"
+        File.Field.Type.MESSAGE -> "message"
+        File.Field.Type.SFIXED32 -> "sFixed32"
+        File.Field.Type.SFIXED64 -> "sFixed64"
+        File.Field.Type.SINT32 -> "sInt32"
+        File.Field.Type.SINT64 -> "sInt64"
+        File.Field.Type.STRING -> "string"
+        File.Field.Type.UINT32 -> "uInt32"
+        File.Field.Type.UINT64 -> "uInt64"
+    }
+
+    private val File.Field.Type.sizeMethod get() = string + "Size"
+
+    private fun File.Field.Standard.mapConstructorReference(): CodeBlock {
+        return CodeBlock.of(
+                kotlinQualifiedTypeName.let { it ->
+                    val type = it.toString()
+                    type.lastIndexOf('.').let { if (it == -1) "::$type" else type.substring(0, it) + "::" + type.substring(it + 1) }
+                }
+        )
+    }
+
+    private fun File.Field.Standard.getNonDefaultCheck(): CodeBlock {
+        return when {
+            repeated -> CodeBlock.of("$kotlinFieldName.isNotEmpty()")
+            file.version == 2 && optional -> CodeBlock.of("$kotlinFieldName != null")
+            else -> type.getNonDefaultCheck(kotlinFieldName)
+        }
+    }
+
+    private fun File.Field.Type.getNonDefaultCheck(fieldName: String): CodeBlock {
+        return when(this) {
+            File.Field.Type.BOOL -> CodeBlock.of(fieldName)
+            File.Field.Type.BYTES -> CodeBlock.of("$fieldName.array.isNotEmpty()")
+            File.Field.Type.ENUM -> CodeBlock.of("$fieldName.value != 0")
+            File.Field.Type.STRING -> CodeBlock.of("$fieldName.isNotEmpty()")
+            else -> CodeBlock.of("$fieldName != $defaultValue")
+        }
+    }
+
+    private val File.Field.Type.defaultValue get() = when (this) {
+        File.Field.Type.BOOL -> "false"
+        File.Field.Type.BYTES -> "pbandk.ByteArr.empty"
+        File.Field.Type.DOUBLE -> "0.0"
+        File.Field.Type.ENUM -> error("No generic default value for enums")
+        File.Field.Type.FIXED32, File.Field.Type.INT32, File.Field.Type.SFIXED32,
+        File.Field.Type.SINT32, File.Field.Type.UINT32 -> "0"
+        File.Field.Type.FIXED64, File.Field.Type.INT64, File.Field.Type.SFIXED64,
+        File.Field.Type.SINT64, File.Field.Type.UINT64 -> "0L"
+        File.Field.Type.FLOAT -> "0.0F"
+        File.Field.Type.MESSAGE -> "null"
+        File.Field.Type.STRING -> "\"\""
+    }
 
     private val File.Type.Message.mapEntryKeyKotlinType get() =
         if (!mapEntry) null else (fields[0] as File.Field.Standard).kotlinValueType(false)
