@@ -58,9 +58,45 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
         typeSpec.addFunction(createMessageSizeExtension(type, className))
         typeSpec.addFunction(createMessageMarshalExtension(type, className))
         typeSpec.addFunction(createMessageUnmarshalExtension(type, className))
+        typeSpec.addProperty(createProtoSizeVal())
+        typeSpec.addFunction(createProtoMarshalFunction())
+        typeSpec.addFunction(createPlusOperator(className))
         return typeSpec.build()
     }
 
+    private fun createProtoSizeVal(): PropertySpec {
+        return PropertySpec.builder("protoSize", Int::class)
+                .addModifiers(KModifier.OVERRIDE)
+                .delegate(CodeBlock.builder()
+                        .beginControlFlow("lazy")
+                        .addStatement("protoSizeImpl()")
+                        .endControlFlow()
+                        .build()
+                ).build()
+    }
+
+    private fun createProtoMarshalFunction(): FunSpec {
+        return FunSpec.builder("protoMarshal")
+                .addModifiers(KModifier.OVERRIDE)
+                .addParameter("marshaller", Marshaller::class)
+                .addCode(CodeBlock.builder()
+                        .addStatement("return protoMarshalImpl(marshaller)")
+                        .build()
+                )
+                .build()
+    }
+
+    private fun createPlusOperator(typeName: ClassName): FunSpec {
+        return FunSpec.builder("plus")
+                .addParameter("other", typeName.copy(nullable = true))
+                .returns(typeName)
+                .addModifiers(KModifier.OVERRIDE, KModifier.OPERATOR)
+                .addCode(CodeBlock.builder()
+                        .addStatement("return protoMergeImpl(other)")
+                        .build()
+                )
+                .build()
+    }
 
     private fun unknownFieldSpec(): PropertySpec {
         return PropertySpec.builder(
