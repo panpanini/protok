@@ -57,11 +57,11 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
         }
         typeSpec.addFunction(createMessageSizeExtension(type, className))
         typeSpec.addFunction(createMessageMarshalExtension(type, className))
-        typeSpec.addFunction(createMessageUnmarshalExtension(type, className))
         typeSpec.addFunction(createMessageMergeExtension(type, className))
         typeSpec.addProperty(createProtoSizeVal())
         typeSpec.addFunction(createProtoMarshalFunction())
         typeSpec.addFunction(createPlusOperator(className))
+        typeSpec.addType(createCompanionObject(type, className))
         return typeSpec.build()
     }
 
@@ -97,6 +97,14 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
                         .build()
                 )
                 .build()
+    }
+
+    private fun createCompanionObject(type: File.Type.Message, typeName: ClassName): TypeSpec {
+        val companion = TypeSpec.companionObjectBuilder()
+                .addSuperinterface(Message.Companion::class.asClassName().parameterizedBy(typeName))
+                .addFunction(createProtoUnmarshalFunction(type, typeName))
+
+        return companion.build()
     }
 
     private fun unknownFieldSpec(): PropertySpec {
@@ -198,12 +206,11 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
     }
 
 
-    private fun createMessageUnmarshalExtension(type: File.Type.Message, typeName: ClassName): FunSpec {
-        val companion = ClassName("", "Companion")
+    private fun createProtoUnmarshalFunction(type: File.Type.Message, typeName: ClassName): FunSpec {
         val unMarshalParameter = ParameterSpec.builder("protoUnmarshal", Unmarshaller::class).build()
         val funSpec = FunSpec.builder("protoUnmarshal")
+                .addModifiers(KModifier.OVERRIDE)
                 .returns(typeName)
-                .receiver(companion)
                 .addParameter(unMarshalParameter)
 
         // local variables
