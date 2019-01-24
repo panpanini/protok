@@ -58,6 +58,7 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
         typeSpec.addFunction(createMessageSizeExtension(type, className))
         typeSpec.addFunction(createMessageMarshalExtension(type, className))
         typeSpec.addFunction(createMessageUnmarshalExtension(type, className))
+        typeSpec.addFunction(createMessageMergeExtension(type, className))
         typeSpec.addProperty(createProtoSizeVal())
         typeSpec.addFunction(createProtoMarshalFunction())
         typeSpec.addFunction(createPlusOperator(className))
@@ -152,6 +153,50 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
         type == File.Field.Type.ENUM -> "$kotlinQualifiedTypeName.fromValue(0)"
         else -> type.defaultValue
     }
+
+    private fun createMessageMergeExtension(type: File.Type.Message, typeName: ClassName): FunSpec {
+        val codeBlock = CodeBlock.builder()
+                .add("return ")
+                .addStatement("other?.copy(")
+                .indent()
+        type.fields.mapNotNull {
+            when (it) {
+                is File.Field.Standard -> buildStandardFieldMerge(it)
+                is File.Field.OneOf -> buildOneOfFieldMerge(it)
+            }
+        }.forEach {
+            codeBlock.addStatement("$it,")
+        }
+        codeBlock.addStatement("unknownFields = unknownFields + other.unknownFields")
+                .unindent()
+                .addStatement(") ?: this")
+        return FunSpec.builder("protoMergeImpl")
+                .receiver(typeName)
+                .returns(typeName)
+                .addCode(codeBlock.build())
+                .addParameter("other", typeName.copy(nullable = true))
+                .build()
+    }
+
+    private fun buildStandardFieldMerge(field: File.Field.Standard): CodeBlock? {
+        return when {
+            field.repeated -> {
+                CodeBlock.of("${field.kotlinFieldName} = ${field.kotlinFieldName} + other.${field.kotlinFieldName}")
+            }
+            field.type == File.Field.Type.MESSAGE -> {
+                CodeBlock.of("${field.kotlinFieldName} = ${field.kotlinFieldName}?.plus(other.${field.kotlinFieldName}) ?: ${field.kotlinFieldName}")
+            }
+            file.version == 2 && field.optional -> {
+                CodeBlock.of("${field.kotlinFieldName} = other?.${field.kotlinFieldName} : ${field.kotlinFieldName}")
+            }
+            else -> null
+        }
+    }
+
+    private fun buildOneOfFieldMerge(field: File.Field.OneOf): CodeBlock {
+        return TODO()
+    }
+
 
     private fun createMessageUnmarshalExtension(type: File.Type.Message, typeName: ClassName): FunSpec {
         val companion = ClassName("", "Companion")
