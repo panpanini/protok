@@ -33,9 +33,9 @@ class EnumGenerator {
                             .build()
             )
         }
+        companion.addFunction(createFromValueFunction(type.values, className))
         typeSpec.addProperty(PropertySpec.builder("value", Int::class).initializer("value").build())
         typeSpec.addType(companion.build())
-        typeSpec.addFunction(createFromValueFunction(type.values, className))
         return typeSpec.build()
     }
 
@@ -49,6 +49,7 @@ class EnumGenerator {
         whenBlock.endControlFlow()
 
         return FunSpec.builder("fromValue")
+                .addModifiers(KModifier.OVERRIDE)
                 .addParameter("value", Int::class)
                 .returns(type)
                 .addCode(whenBlock.build())

@@ -30,8 +30,8 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
 
                 is File.Field.OneOf -> TODO()
             }
-            if (index == 0 && type.mapEntry) {
-                // add override to first item of map entry
+            if (type.mapEntry) {
+                // add override map entry
                 param.addModifiers(KModifier.OVERRIDE)
             }
             param.build()
@@ -116,7 +116,6 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
                 .build()
     }
 
-
     private fun File.Field.Standard.unmarshalLocalVar(): CodeBlock {
         val codeBlock = CodeBlock.builder()
 
@@ -126,7 +125,7 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
                     if (it == null) {
                         codeBlock.addStatement("var $kotlinFieldName: %T = null", ListWithSize.Builder::class.asTypeName().parameterizedBy(kotlinQualifiedTypeName).copy(nullable = true))
                     } else {
-                        codeBlock.addStatement("var $kotlinFieldName: ${kotlinValueType(true)} = $defaultValue")
+                        codeBlock.addStatement("var $kotlinFieldName: %T = null", MessageMap.Builder::class.asTypeName().parameterizedBy(it.mapEntryKeyKotlinType!!, it.mapEntryValueKotlinType!!).copy(nullable = true))
                     }
                 }
             }
