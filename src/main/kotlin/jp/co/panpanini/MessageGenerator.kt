@@ -234,9 +234,8 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
 
     private fun createMessageMergeExtension(type: File.Type.Message, typeName: ClassName): FunSpec {
         val codeBlock = CodeBlock.builder()
-                .add("return ")
+                .add("val obj = ")
                 .addStatement("other?.copy(")
-                .indent()
         type.fields.mapNotNull {
             when (it) {
                 is File.Field.Standard -> buildStandardFieldMerge(it)
@@ -246,8 +245,8 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
             codeBlock.addStatement("$it,")
         }
         codeBlock.addStatement("unknownFields = unknownFields + other.unknownFields")
-                .unindent()
                 .addStatement(") ?: this")
+                .addStatement("return obj")
         return FunSpec.builder("protoMergeImpl")
                 .receiver(typeName)
                 .returns(typeName)
@@ -451,7 +450,7 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
             codeBlock.add(it)
         }
         // unknownFields
-        codeBlock.addStatement("protoSize += unknownFields.entries.sumBy { it.value.size() }")
+        codeBlock.addStatement("protoSize += unknownFields.entries.sumBy {\n it.value.size()\n }")
 
         codeBlock.addStatement("return protoSize")
 
