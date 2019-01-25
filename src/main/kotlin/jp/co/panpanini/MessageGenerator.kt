@@ -468,7 +468,7 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
                 codeBlock.add("%T.mapSize($number, $kotlinFieldName, ${mapConstructorReference()})", sizer)
             }
             repeated && packed -> {
-                codeBlock.add("%T.tagSize($number) + %T.packedRepeatedSize($kotlinFieldName, %T::${type.sizeMethod}", sizer, sizer, sizer)
+                codeBlock.add("%T.tagSize($number) + %T.packedRepeatedSize($kotlinFieldName, %T::${type.sizeMethod})", sizer, sizer, sizer)
             }
             repeated -> {
                 codeBlock.add("%T.tagSize($number) * $kotlinFieldName.size + $kotlinFieldName.sumBy(%T::${type.sizeMethod})", sizer, sizer)
