@@ -13,7 +13,7 @@ class CodeGenerator(private val request: CodeGeneratorRequest) {
             val name = it.name ?: return@filter false //TODO
             request.fileToGenerate.contains(name)
             true
-        }.mapNotNull {
+        }.flatMap {
             val (file, types) = FileGenerator().generateFile(it, typeMappings)
             typeMappings += types
             file

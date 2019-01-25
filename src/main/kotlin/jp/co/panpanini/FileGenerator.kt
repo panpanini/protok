@@ -9,24 +9,22 @@ import pbandk.wkt.FileDescriptorProto
 
 class FileGenerator {
 
-    fun generateFile(it: FileDescriptorProto, typeMappings: Map<String, String>): Pair<CodeGeneratorResponse.File?,  Map<String, String>>{
+    fun generateFile(it: FileDescriptorProto, typeMappings: Map<String, String>): Pair<List<CodeGeneratorResponse.File>,  Map<String, String>>{
         val file = FileBuilder.buildFile(FileBuilder.Context(it, mapOf()))
+
         val types = typeMappings + file.kotlinTypeMappings()
 
-        val packageName = file.kotlinPackageName ?: return Pair(null, typeMappings)
-        val name = it.name ?: return Pair(null, typeMappings)
-        val fileSpec = FileSpec.builder(packageName, name)
-        file.types.map { type ->
-            type.toTypeSpec(file, types)
-        }.forEach { typeSpec ->
-            fileSpec.addType(typeSpec)
+        val packageName = file.kotlinPackageName ?: return Pair(emptyList(), typeMappings)
+        val files = file.types.map { type ->
+            FileSpec.builder(packageName, type.kotlinTypeName)
+                    .addType(type.toTypeSpec(file, types))
+                    .build()
+        }.map {
+            val filePath = "${packageName.replace('.', '/')}/${it.name}.kt"
+            CodeGeneratorResponse.File(name = filePath, content = it.toString())
         }
-        fileSpec.build()
 
-        val fileNameSansPath = name.substringAfterLast('/')
-        val filePath = "${packageName.replace('.', '/')}/${fileNameSansPath.removeSuffix(".proto")}.kt"
-
-        return Pair(CodeGeneratorResponse.File(name = filePath, content = fileSpec.build().toString()), types)
+        return Pair(files, types)
     }
 }
 
