@@ -63,6 +63,7 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
         typeSpec.addFunction(createProtoMarshalFunction())
         typeSpec.addFunction(createPlusOperator(className))
         typeSpec.addType(createCompanionObject(type, className))
+        typeSpec.addType(createBuilder(type, className))
         return typeSpec.build()
     }
 
@@ -106,6 +107,78 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
                 .addFunction(createProtoUnmarshalFunction(type, typeName))
 
         return companion.build()
+    }
+
+    private fun createBuilder(type: File.Type.Message, typeName: ClassName): TypeSpec {
+        val builder = ClassName("", "Builder")
+        val typeSpec = TypeSpec.classBuilder(builder)
+        type.fields.map {
+            when (it) {
+                is File.Field.Standard -> PropertySpec.builder(it.kotlinFieldName, it.kotlinValueType(true))
+                        .addModifiers(KModifier.PRIVATE)
+                        .mutable()
+                        .initializer(it.defaultValue)
+                        .build()
+                is File.Field.OneOf -> TODO()
+            }
+        }.forEach {
+            typeSpec.addProperty(it)
+        }
+
+        typeSpec.addProperty(PropertySpec.builder("unknownFields", Map::class.parameterizedBy(Int::class, UnknownField::class)).mutable().initializer("emptyMap()").build())
+
+        type.fields.map {
+            when (it) {
+                is File.Field.Standard -> FunSpec.builder(it.kotlinFieldName)
+                        .addParameter(ParameterSpec.builder(it.kotlinFieldName, it.kotlinValueType(true)).build())
+                        .returns(builder)
+                        .addCode(CodeBlock.builder()
+                                .addStatement("this.${it.kotlinFieldName} = ${it.kotlinFieldName}")
+                                .addStatement("return this")
+                                .build()
+                        )
+                        .build()
+                is File.Field.OneOf -> TODO()
+            }
+        }.forEach {
+            typeSpec.addFunction(it)
+        }
+        typeSpec.addFunction(FunSpec.builder("unknownFields")
+                .addParameter("unknownFields", Map::class.parameterizedBy(Int::class, UnknownField::class))
+                .returns(builder)
+                .addStatement("this.unknownFields = unknownFields")
+                .addStatement("return this")
+                .build())
+
+        val code = CodeBlock.builder()
+                .add("val obj = %T(", typeName)
+
+                .add(type.fields.map {
+                    when (it) {
+                        is File.Field.Standard -> {
+                            CodeBlock.builder()
+                                    .add("${it.kotlinFieldName}, ")
+                                    .build()
+                        }
+                        is File.Field.OneOf -> TODO()
+                    }
+                }.reduce { first, second ->
+                    CodeBlock.builder().add(first).add(second).build()
+                }.toBuilder()
+                        .add("unknownFields")
+                        .addStatement(")")
+                        .build()
+                )
+                .addStatement("return obj")
+                .build()
+
+        val build = FunSpec.builder("build")
+                .returns(typeName)
+                .addCode(code)
+
+        typeSpec.addFunction(build.build())
+
+        return typeSpec.build()
     }
 
     private fun unknownFieldSpec(): PropertySpec {
