@@ -9,8 +9,8 @@ import pbandk.wkt.FileDescriptorProto
 
 class FileGenerator {
 
-    fun generateFile(it: FileDescriptorProto, typeMappings: Map<String, String>): Pair<List<CodeGeneratorResponse.File>,  Map<String, String>>{
-        val file = FileBuilder.buildFile(FileBuilder.Context(it, mapOf()))
+    fun generateFile(it: FileDescriptorProto, typeMappings: Map<String, String>, params: Map<String, String>): Pair<List<CodeGeneratorResponse.File>,  Map<String, String>>{
+        val file = FileBuilder.buildFile(FileBuilder.Context(it, params))
 
         val types = typeMappings + file.kotlinTypeMappings()
 
