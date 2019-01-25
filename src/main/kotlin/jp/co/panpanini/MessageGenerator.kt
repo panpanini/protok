@@ -9,7 +9,7 @@ import pbandk.gen.File
 class MessageGenerator(private val file: File, private val kotlinTypeMappings: Map<String, String>) {
 
     fun buildMessage(type: File.Type.Message): TypeSpec {
-        val className = ClassName(file.kotlinPackageName ?: "", type.kotlinTypeName)
+        val className = ClassName("", type.kotlinTypeName)
         val mapEntry = if (type.mapEntry) {
             val keyName = type.mapEntryKeyKotlinType!!
             val valueName = type.mapEntryValueKotlinType!!
