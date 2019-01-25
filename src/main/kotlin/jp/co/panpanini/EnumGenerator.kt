@@ -29,7 +29,7 @@ class EnumGenerator {
                             ClassName.bestGuess(type.kotlinTypeName)
                     )
                             .initializer("%T(${it.number})", ClassName.bestGuess(type.kotlinTypeName))
-                            .addAnnotation(JvmStatic::class)
+                            .addAnnotation(JvmField::class)
                             .build()
             )
         }
