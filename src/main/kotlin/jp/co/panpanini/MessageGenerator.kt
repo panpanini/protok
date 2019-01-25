@@ -2,7 +2,6 @@ package jp.co.panpanini
 
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
-import com.squareup.kotlinpoet.jvm.jvmOverloads
 import pbandk.*
 import pbandk.gen.File
 
@@ -23,7 +22,6 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
                 .addModifiers(KModifier.DATA)
 
         val constructor = FunSpec.constructorBuilder()
-                .jvmOverloads()
 
         type.fields.mapIndexed { index, field ->
             val param = when (field) {
