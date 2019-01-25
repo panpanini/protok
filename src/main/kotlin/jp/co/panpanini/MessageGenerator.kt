@@ -2,6 +2,7 @@ package jp.co.panpanini
 
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
+import com.squareup.kotlinpoet.jvm.jvmOverloads
 import pbandk.*
 import pbandk.gen.File
 
@@ -23,6 +24,7 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
                 .addModifiers(KModifier.DATA)
 
         val constructor = FunSpec.constructorBuilder()
+                .jvmOverloads()
 
         type.fields.mapIndexed { index, field ->
             val param = when (field) {
@@ -34,10 +36,10 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
                 // add override map entry
                 param.addModifiers(KModifier.OVERRIDE)
             }
-            param.build()
-        }.forEach {
-            constructor.addParameter(it.name, it.type)
-            typeSpec.addProperty(it)
+            Pair(param.build(), field)
+        }.forEach { (property, field) ->
+            constructor.addParameter(ParameterSpec.builder(property.name, property.type).defaultValue(field.defaultValue).build())
+            typeSpec.addProperty(property)
         }
         // unknown fields
        val unknownPropertySpec = unknownFieldSpec()
