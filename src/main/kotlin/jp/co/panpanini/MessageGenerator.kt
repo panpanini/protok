@@ -1,7 +1,9 @@
 package jp.co.panpanini
 
+import com.improve_future.case_changer.toSnakeCase
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
+import com.squareup.kotlinpoet.jvm.jvmStatic
 import pbandk.*
 import pbandk.gen.File
 
@@ -104,6 +106,9 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
                 .addSuperinterface(Message.Companion::class.asClassName().parameterizedBy(typeName))
                 .addFunction(createProtoUnmarshalFunction(type, typeName))
 
+        createDefaultConstants(type)
+                .forEach { companion.addProperty(it) }
+
         return companion.build()
     }
 
@@ -128,10 +133,10 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
         type.fields.map {
             when (it) {
                 is File.Field.Standard -> FunSpec.builder(it.kotlinFieldName)
-                        .addParameter(ParameterSpec.builder(it.kotlinFieldName, it.kotlinValueType(true)).build())
+                        .addParameter(ParameterSpec.builder(it.kotlinFieldName, it.kotlinValueType(true).copy(nullable = true)).build())
                         .returns(builder)
                         .addCode(CodeBlock.builder()
-                                .addStatement("this.${it.kotlinFieldName} = ${it.kotlinFieldName}")
+                                .addStatement("this.${it.kotlinFieldName} = ${it.kotlinFieldName} ?: ${it.defaultValue}")
                                 .addStatement("return this")
                                 .build()
                         )
@@ -174,6 +179,29 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
         typeSpec.addFunction(build.build())
 
         return typeSpec.build()
+    }
+
+    //TODO: use these instead of re-creating defaults in Builder & Constructor
+    private fun createDefaultConstants(type: File.Type.Message): List<PropertySpec> {
+        return type.fields.map {
+            when (it) {
+                is File.Field.Standard -> {
+                    val type = when {
+                        it.repeated && !it.map -> {
+                            List::class.asTypeName().parameterizedBy(it.kotlinValueType(false))
+                        }
+                        else -> it.kotlinValueType(true)
+                    }
+                    PropertySpec.builder("DEFAULT_${it.kotlinFieldName.capitalize().toSnakeCase().toUpperCase()}", type)
+                            .initializer(it.defaultValue)
+                            .jvmStatic()
+                            .build()
+                }
+                is File.Field.OneOf -> TODO()
+            }
+
+
+        }
     }
 
     private fun unknownFieldSpec(): PropertySpec {
