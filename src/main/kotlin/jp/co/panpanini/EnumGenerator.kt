@@ -5,6 +5,7 @@ import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.jvm.jvmField
 import pbandk.Message
 import pbandk.gen.File
+import java.io.Serializable
 
 class EnumGenerator {
 
@@ -12,6 +13,7 @@ class EnumGenerator {
         val className = ClassName("", type.kotlinTypeName)
         val typeSpec = TypeSpec.classBuilder(className)
                 .addModifiers(KModifier.DATA)
+                .addSuperinterface(Serializable::class)
                 .primaryConstructor(
                         FunSpec.constructorBuilder()
                                 .addParameter("value", Int::class, KModifier.OVERRIDE)
