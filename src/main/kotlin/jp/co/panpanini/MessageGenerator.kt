@@ -63,6 +63,7 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
         typeSpec.addFunction(createProtoMarshalFunction())
         typeSpec.addFunction(createPlusOperator(className))
         typeSpec.addType(createCompanionObject(type, className))
+        typeSpec.addFunction(createNewBuilder(type, className))
         typeSpec.addType(createBuilder(type, className))
         return typeSpec.build()
     }
@@ -110,6 +111,37 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
                 .forEach { companion.addProperty(it) }
 
         return companion.build()
+    }
+
+    private fun createNewBuilder(type: File.Type.Message, typeName: ClassName): FunSpec {
+        val builder = ClassName("", "Builder")
+        val funSpec = FunSpec.builder("newBuilder")
+                .returns(builder)
+        val codeBlock = CodeBlock.Builder()
+                .addStatement("val builder =  Builder()")
+                .indent()
+
+        type.fields.map {
+            when (it) {
+
+                is File.Field.Standard -> {
+                    ".${it.kotlinFieldName}(${it.kotlinFieldName})"
+                }
+                is File.Field.OneOf -> TODO()
+            }
+        }.forEach {
+            codeBlock.addStatement(it)
+        }
+
+        //unknownFields
+        codeBlock.addStatement(".unknownFields(unknownFields)")
+                .unindent()
+
+        // return builder
+        codeBlock.addStatement("return builder")
+
+        funSpec.addCode(codeBlock.build())
+        return funSpec.build()
     }
 
     private fun createBuilder(type: File.Type.Message, typeName: ClassName): TypeSpec {
