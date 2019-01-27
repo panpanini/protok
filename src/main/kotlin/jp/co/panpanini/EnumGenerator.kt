@@ -2,6 +2,7 @@ package jp.co.panpanini
 
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
+import com.squareup.kotlinpoet.jvm.jvmField
 import pbandk.Message
 import pbandk.gen.File
 
@@ -15,6 +16,11 @@ class EnumGenerator {
                         FunSpec.constructorBuilder()
                                 .addParameter("value", Int::class, KModifier.OVERRIDE)
                                 .build()
+                )
+                .addProperty(PropertySpec.builder("name", String::class)
+                        .initializer("%S", type.kotlinTypeName.decapitalize())
+                        .jvmField()
+                        .build()
                 )
                 .addSuperinterface(Message.Enum::class)
 
