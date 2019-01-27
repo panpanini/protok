@@ -25,9 +25,9 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
 
         val constructor = FunSpec.constructorBuilder()
 
-        type.fields.mapIndexed { index, field ->
+        type.fields.map { field ->
             val param = when (field) {
-                is File.Field.Standard -> PropertySpec.builder(field.kotlinFieldName, field.kotlinValueType(true)).initializer(field.kotlinFieldName)
+                is File.Field.Standard -> PropertySpec.builder(field.kotlinFieldName, field.kotlinValueType(!type.mapEntry)).initializer(field.kotlinFieldName)
 
                 is File.Field.OneOf -> TODO()
             }
@@ -37,7 +37,11 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
             }
             Pair(param.build(), field)
         }.forEach { (property, field) ->
-            constructor.addParameter(ParameterSpec.builder(property.name, property.type).defaultValue(field.defaultValue).build())
+            val param = ParameterSpec.builder(property.name, property.type)
+            if (!type.mapEntry) {
+                param.defaultValue(field.defaultValue)
+            }
+            constructor.addParameter(param.build())
             typeSpec.addProperty(property)
         }
         // unknown fields
@@ -63,8 +67,10 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
         typeSpec.addFunction(createProtoMarshalFunction())
         typeSpec.addFunction(createPlusOperator(className))
         typeSpec.addType(createCompanionObject(type, className))
-        typeSpec.addFunction(createNewBuilder(type, className))
-        typeSpec.addType(createBuilder(type, className))
+        if (!type.mapEntry) {
+            typeSpec.addFunction(createNewBuilder(type, className))
+            typeSpec.addType(createBuilder(type, className))
+        }
         return typeSpec.build()
     }
 
@@ -149,7 +155,7 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
         val typeSpec = TypeSpec.classBuilder(builder)
         type.fields.map {
             when (it) {
-                is File.Field.Standard -> PropertySpec.builder(it.kotlinFieldName, it.kotlinValueType(true))
+                is File.Field.Standard -> PropertySpec.builder(it.kotlinFieldName, it.kotlinValueType(!it.map))
                         .addModifiers(KModifier.PRIVATE)
                         .mutable()
                         .initializer(it.defaultValue)
@@ -363,7 +369,7 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
         //TODO: clean this up - its a little difficult to follow. maybe create a function for it
         codeBlock.beginControlFlow("while (true)")
         codeBlock.beginControlFlow("when (${unMarshalParameter.name}.readTag())")
-                .addStatement("0 -> ${typeName.simpleName}(${doneKotlinFields.joinToString()}${if(doneKotlinFields.isNotEmpty()) ", " else ""}${unMarshalParameter.name}.unknownFields())")
+                .addStatement("0 -> ${typeName.simpleName}(${doneKotlinFields.map { "$it!!" }.joinToString()}${if(doneKotlinFields.isNotEmpty()) ", " else ""}${unMarshalParameter.name}.unknownFields())")
 
         type.sortedStandardFieldsWithOneOfs().map { (field, oneOf) ->
             val tags = mutableListOf(field.tag)
@@ -606,7 +612,7 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
     private val File.Type.Message.mapEntryKeyKotlinType get() =
         if (!mapEntry) null else (fields[0] as File.Field.Standard).kotlinValueType(false)
     private val File.Type.Message.mapEntryValueKotlinType get() =
-        if (!mapEntry) null else (fields[1] as File.Field.Standard).kotlinValueType(true)
+        if (!mapEntry) null else (fields[1] as File.Field.Standard).kotlinValueType(false)
 
     private fun File.Field.Standard.mapEntry() =
             if (!map) null else (localType as? File.Type.Message)?.takeIf { it.mapEntry }
