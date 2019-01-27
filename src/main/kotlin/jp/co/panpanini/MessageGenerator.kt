@@ -6,6 +6,7 @@ import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.jvm.jvmStatic
 import pbandk.*
 import pbandk.gen.File
+import java.io.Serializable
 
 class MessageGenerator(private val file: File, private val kotlinTypeMappings: Map<String, String>) {
 
@@ -21,13 +22,14 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
         val superInterface = Message::class.asClassName().parameterizedBy(className)
         val typeSpec = TypeSpec.classBuilder(type.kotlinTypeName)
                 .addSuperinterface(superInterface)
+                .addSuperinterface(Serializable::class)
                 .addModifiers(KModifier.DATA)
 
         val constructor = FunSpec.constructorBuilder()
 
         type.fields.map { field ->
             val param = when (field) {
-                is File.Field.Standard -> PropertySpec.builder(field.kotlinFieldName, field.kotlinValueType(!type.mapEntry)).initializer(field.kotlinFieldName)
+                is File.Field.Standard -> PropertySpec.builder(field.kotlinFieldName, field.kotlinValueType(false)).initializer(field.kotlinFieldName)
 
                 is File.Field.OneOf -> TODO()
             }
@@ -155,7 +157,7 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
         val typeSpec = TypeSpec.classBuilder(builder)
         type.fields.map {
             when (it) {
-                is File.Field.Standard -> PropertySpec.builder(it.kotlinFieldName, it.kotlinValueType(!it.map))
+                is File.Field.Standard -> PropertySpec.builder(it.kotlinFieldName, it.kotlinValueType(false))
                         .addModifiers(KModifier.PRIVATE)
                         .mutable()
                         .initializer(it.defaultValue)
@@ -293,6 +295,7 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
         repeated -> "emptyList()"
         file.version == 2 && optional -> "null"
         type == File.Field.Type.ENUM -> "$kotlinQualifiedTypeName.fromValue(0)"
+        type == File.Field.Type.MESSAGE -> "$kotlinQualifiedTypeName()"
         else -> type.defaultValue
     }
 
