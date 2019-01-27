@@ -42,7 +42,7 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
         }
         // unknown fields
        val unknownPropertySpec = unknownFieldSpec()
-        constructor.addParameter(unknownPropertySpec.name, unknownPropertySpec.type)
+        constructor.addParameter(ParameterSpec.builder(unknownPropertySpec.name, unknownPropertySpec.type).defaultValue("emptyMap()").build())
         typeSpec.addProperty(unknownPropertySpec)
 
         typeSpec.primaryConstructor(constructor.build())
