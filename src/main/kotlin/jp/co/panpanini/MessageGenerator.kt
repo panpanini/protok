@@ -36,6 +36,8 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
             if (type.mapEntry) {
                 // add override map entry
                 param.addModifiers(KModifier.OVERRIDE)
+            } else {
+                param.addAnnotation(JvmField::class)
             }
             Pair(param.build(), field)
         }.forEach { (property, field) ->
