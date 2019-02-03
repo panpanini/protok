@@ -2,6 +2,7 @@ package jp.co.panpanini
 
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
+import com.squareup.kotlinpoet.jvm.jvmStatic
 import pbandk.Message
 import pbandk.gen.File
 import java.io.Serializable
@@ -58,6 +59,7 @@ class EnumGenerator {
                 .addParameter("value", Int::class)
                 .returns(type)
                 .addCode(whenBlock.build())
+                .jvmStatic()
                 .build()
     }
 
@@ -74,6 +76,7 @@ class EnumGenerator {
                 .addParameter("name", String::class)
                 .returns(type)
                 .addCode(whenBlock.build())
+                .jvmStatic()
                 .build()
     }
 }
