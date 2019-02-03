@@ -71,6 +71,7 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
         typeSpec.addFunction(createProtoMarshalFunction())
         typeSpec.addFunction(createPlusOperator(className))
         typeSpec.addType(createCompanionObject(type, className))
+        typeSpec.addFunction(createEncodeFunction())
         if (!type.mapEntry) {
             typeSpec.addFunction(createNewBuilder(type, className))
             typeSpec.addType(createBuilder(type, className))
@@ -116,6 +117,7 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
         val companion = TypeSpec.companionObjectBuilder()
                 .addSuperinterface(Message.Companion::class.asClassName().parameterizedBy(typeName))
                 .addFunction(createProtoUnmarshalFunction(type, typeName))
+                .addFunction(createDecodeFunction(type, typeName))
 
         createDefaultConstants(type)
                 .forEach { companion.addProperty(it) }
@@ -343,6 +345,14 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
         return TODO()
     }
 
+    private fun createDecodeFunction(type: File.Type.Message, typeName: ClassName): FunSpec {
+        return FunSpec.builder("decode")
+                .returns(typeName)
+                .addParameter("arr", ByteArray::class)
+                .addAnnotation(JvmStatic::class)
+                .addCode("return protoUnmarshal(arr)\n")
+                .build()
+    }
 
     private fun createProtoUnmarshalFunction(type: File.Type.Message, typeName: ClassName): FunSpec {
         val unMarshalParameter = ParameterSpec.builder("protoUnmarshal", Unmarshaller::class).build()
@@ -428,6 +438,13 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
 
     protected val File.Field.Type.readMethod get() = "read" + string.capitalize()
 
+    private fun createEncodeFunction(): FunSpec {
+        return FunSpec.builder("encode")
+                .returns(ByteArray::class)
+                .addCode("return protoMarshal()\n")
+                .build()
+
+    }
 
     private fun createMessageMarshalExtension(type: File.Type.Message, typeName: ClassName): FunSpec {
         val marshalParameter = ParameterSpec.builder("protoMarshal", Marshaller::class).build()
