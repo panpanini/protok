@@ -3,7 +3,7 @@ package jp.co.panpanini
 import com.improve_future.case_changer.toSnakeCase
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
-import com.squareup.kotlinpoet.jvm.jvmStatic
+import com.squareup.kotlinpoet.jvm.jvmField
 import pbandk.*
 import pbandk.gen.File
 import java.io.Serializable
@@ -259,7 +259,7 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
                     }
                     PropertySpec.builder("DEFAULT_${it.kotlinFieldName.capitalize().toSnakeCase().toUpperCase()}", type)
                             .initializer(it.defaultValue)
-                            .jvmStatic()
+                            .jvmField()
                             .build()
                 }
                 is File.Field.OneOf -> TODO()
