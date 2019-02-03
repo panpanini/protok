@@ -54,6 +54,7 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
         typeSpec.addProperty(unknownPropertySpec)
 
         typeSpec.primaryConstructor(constructor.build())
+        typeSpec.addFunction(createSecondaryConstructor(type))
 
         mapEntry?.let {
             typeSpec.addSuperinterface(mapEntry)
@@ -77,6 +78,26 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
             typeSpec.addType(createBuilder(type, className))
         }
         return typeSpec.build()
+    }
+
+    private fun createSecondaryConstructor(type: File.Type.Message): FunSpec {
+        val constructor = FunSpec.constructorBuilder()
+        val params = type.fields.map { field ->
+            val param = when (field) {
+                is File.Field.Standard -> ParameterSpec.builder(field.kotlinFieldName, field.kotlinValueType(false))
+
+                is File.Field.OneOf -> TODO()
+            }
+            param.build()
+        }
+
+        params.forEach { param ->
+            constructor.addParameter(param)
+        }
+
+        constructor.callThisConstructor(*params.map { it.name }.toTypedArray(), "emptyMap()")
+
+        return constructor.build()
     }
 
     private fun createProtoSizeVal(): PropertySpec {
