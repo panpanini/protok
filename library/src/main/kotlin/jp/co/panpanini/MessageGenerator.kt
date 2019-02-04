@@ -183,7 +183,6 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
         type.fields.map {
             when (it) {
                 is File.Field.Standard -> PropertySpec.builder(it.kotlinFieldName, it.kotlinValueType(false))
-                        .addModifiers(KModifier.PRIVATE)
                         .mutable()
                         .initializer(it.defaultValue)
                         .build()
