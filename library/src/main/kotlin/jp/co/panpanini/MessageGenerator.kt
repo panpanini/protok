@@ -73,6 +73,7 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
         typeSpec.addFunction(createPlusOperator(className))
         typeSpec.addType(createCompanionObject(type, className))
         typeSpec.addFunction(createEncodeFunction())
+        typeSpec.addFunction(createProtoUnmarshalFunction(className))
         if (!type.mapEntry) {
             typeSpec.addFunction(createNewBuilder(type, className))
             typeSpec.addType(createBuilder(type, className))
@@ -137,7 +138,7 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
     private fun createCompanionObject(type: File.Type.Message, typeName: ClassName): TypeSpec {
         val companion = TypeSpec.companionObjectBuilder()
                 .addSuperinterface(Message.Companion::class.asClassName().parameterizedBy(typeName))
-                .addFunction(createProtoUnmarshalFunction(type, typeName))
+                .addFunction(createCompanionProtoUnmarshalFunction(type, typeName))
                 .addFunction(createDecodeFunction(type, typeName))
 
         createDefaultConstants(type)
@@ -374,7 +375,23 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
                 .build()
     }
 
-    private fun createProtoUnmarshalFunction(type: File.Type.Message, typeName: ClassName): FunSpec {
+    private fun createProtoUnmarshalFunction(typeName: ClassName): FunSpec {
+        val unMarshalParameter = ParameterSpec.builder("protoUnmarshal", Unmarshaller::class).build()
+
+        return FunSpec.builder("protoUnmarshal")
+                .addParameter(unMarshalParameter)
+                .returns(typeName)
+                .addModifiers(KModifier.OVERRIDE)
+                .addCode(
+                        CodeBlock.builder()
+                                .add("return Companion.protoUnmarshal(protoUnmarshal)")
+                                .build()
+                )
+
+                .build()
+    }
+
+    private fun createCompanionProtoUnmarshalFunction(type: File.Type.Message, typeName: ClassName): FunSpec {
         val unMarshalParameter = ParameterSpec.builder("protoUnmarshal", Unmarshaller::class).build()
         val funSpec = FunSpec.builder("protoUnmarshal")
                 .addModifiers(KModifier.OVERRIDE)
