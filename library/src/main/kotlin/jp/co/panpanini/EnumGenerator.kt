@@ -42,6 +42,7 @@ class EnumGenerator {
         typeSpec.addProperty(PropertySpec.builder("value", Int::class).initializer("value").build())
         typeSpec.addProperty(PropertySpec.builder("name", String::class).initializer("name").build())
         typeSpec.addType(companion.build())
+        typeSpec.addFunction(createToStringFunction())
         return typeSpec.build()
     }
 
@@ -77,6 +78,14 @@ class EnumGenerator {
                 .returns(type)
                 .addCode(whenBlock.build())
                 .jvmStatic()
+                .build()
+    }
+
+    private fun createToStringFunction(): FunSpec {
+        return FunSpec.builder("toString")
+                .addModifiers(KModifier.OVERRIDE)
+                .returns(String::class)
+                .addCode("return name")
                 .build()
     }
 }
