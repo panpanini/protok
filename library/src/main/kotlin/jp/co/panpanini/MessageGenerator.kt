@@ -104,10 +104,8 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
     private fun createProtoSizeVal(): PropertySpec {
         return PropertySpec.builder("protoSize", Int::class)
                 .addModifiers(KModifier.OVERRIDE)
-                .delegate(CodeBlock.builder()
-                        .beginControlFlow("lazy")
+                .initializer(CodeBlock.builder()
                         .addStatement("protoSizeImpl()")
-                        .endControlFlow()
                         .build()
                 ).build()
     }
