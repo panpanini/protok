@@ -309,7 +309,7 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
     private val File.Field.Standard.unmarshalVarDone get() =
         when {
             map -> "pbandk.MessageMap.Builder.fixed($kotlinFieldName)"
-            repeated -> "pbandk.ListWithSize.Builder.fixed($kotlinFieldName)"
+            repeated -> "pbandk.ListWithSize.Builder.fixed($kotlinFieldName).list"
             else -> kotlinFieldName
         }
 
