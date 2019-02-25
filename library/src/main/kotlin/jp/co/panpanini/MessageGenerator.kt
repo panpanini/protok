@@ -183,7 +183,7 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
             when (it) {
                 is File.Field.Standard -> PropertySpec.builder(it.kotlinFieldName, it.kotlinValueType(false))
                         .mutable()
-                        .initializer("DEFAULT_${it.kotlinFieldName.capitalize().toSnakeCase().toUpperCase()}")
+                        .initializer(it.defaultValueName)
                         .build()
                 is File.Field.OneOf -> TODO()
             }
@@ -199,7 +199,7 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
                         .addParameter(ParameterSpec.builder(it.kotlinFieldName, it.kotlinValueType(true).copy(nullable = true)).build())
                         .returns(builder)
                         .addCode(CodeBlock.builder()
-                                .addStatement("this.${it.kotlinFieldName} = ${it.kotlinFieldName} ?: ${it.defaultValue}")
+                                .addStatement("this.${it.kotlinFieldName} = ${it.kotlinFieldName} ?: ${it.defaultValueName}")
                                 .addStatement("return this")
                                 .build()
                         )
@@ -244,18 +244,17 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
         return typeSpec.build()
     }
 
-    //TODO: use these instead of re-creating defaults in Builder & Constructor
     private fun createDefaultConstants(type: File.Type.Message): List<PropertySpec> {
         return type.fields.map {
             when (it) {
                 is File.Field.Standard -> {
                     val type = when {
                         it.repeated && !it.map -> {
-                            List::class.asTypeName().parameterizedBy(it.kotlinValueType(false))
+                            it.kotlinValueType(false)
                         }
-                        else -> it.kotlinValueType(true)
+                        else -> it.kotlinValueType(false)
                     }
-                    PropertySpec.builder("DEFAULT_${it.kotlinFieldName.capitalize().toSnakeCase().toUpperCase()}", type)
+                    PropertySpec.builder(it.defaultValueName, type)
                             .initializer(it.defaultValue)
                             .jvmField()
                             .build()
@@ -636,8 +635,8 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
     private fun File.Field.Standard.getNonDefaultCheck(): CodeBlock {
         return when {
             repeated -> CodeBlock.of("$kotlinFieldName.isNotEmpty()")
-            file.version == 2 && optional -> CodeBlock.of("$kotlinFieldName != null")
-            else -> type.getNonDefaultCheck(kotlinFieldName)
+            file.version == 2 && optional -> CodeBlock.of("$kotlinFieldName != $defaultValueName")
+            else -> CodeBlock.of("$kotlinFieldName != $defaultValueName")
         }
     }
 
@@ -749,4 +748,7 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
         File.Field.Type.DOUBLE, File.Field.Type.FIXED64, File.Field.Type.SFIXED64 -> 1
         File.Field.Type.FIXED32, File.Field.Type.FLOAT, File.Field.Type.SFIXED32 -> 5
     }
+
+    private val File.Field.defaultValueName : String
+        get() = "DEFAULT_${this.kotlinFieldName.capitalize().toSnakeCase().toUpperCase()}"
 }
