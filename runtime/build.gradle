@@ -1,0 +1,45 @@
+apply plugin: 'kotlin'
+apply plugin: 'org.jetbrains.kotlin.jvm'
+apply plugin: 'guru.stefma.artifactorypublish'
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+    maven { url "https://kotlin.bintray.com/kotlinx" }
+    maven { url 'https://jitpack.io' }
+
+}
+
+dependencies {
+    compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+    implementation 'com.github.cretz.pbandk:protoc-gen-kotlin-jvm:0.3.0'
+
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+}
+
+compileKotlin {
+    kotlinOptions.jvmTarget = "1.8"
+}
+compileTestKotlin {
+    kotlinOptions.jvmTarget = "1.8"
+}
+
+jar {
+    from {
+        configurations.compileClasspath.findResults {
+            if (it.name.contains("pbandk-runtime-jvm-0.3.0.jar")) zipTree(it)
+        }
+    }
+    exclude('**/META-INF/pbandk-runtime-jvm.kotlin_module')
+}
+
+artifactoryPublish {
+    groupId = 'jp.co.panpanini'
+    artifactId = 'protok-runtime'
+    publishVersion = "0.0.6"
+    artifactoryUrl = artifactoryUrl
+    artifactoryRepo = artifactoryRepo
+    artifactoryUser = artifactoryUsername
+    artifactoryKey = artifactoryPassword
+}
