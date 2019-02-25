@@ -183,7 +183,7 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
             when (it) {
                 is File.Field.Standard -> PropertySpec.builder(it.kotlinFieldName, it.kotlinValueType(false))
                         .mutable()
-                        .initializer(it.defaultValue)
+                        .initializer("DEFAULT_${it.kotlinFieldName.capitalize().toSnakeCase().toUpperCase()}")
                         .build()
                 is File.Field.OneOf -> TODO()
             }
