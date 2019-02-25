@@ -15,6 +15,7 @@ repositories {
 }
 
 dependencies {
+    compile project(':runtime')
     compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
     compile 'com.github.cretz.pbandk:protoc-gen-kotlin-jvm:0.3.0'
     compile 'com.squareup:kotlinpoet:1.0.1'
