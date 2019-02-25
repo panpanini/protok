@@ -1,8 +1,14 @@
 buildscript {
-    ext.kotlin_version = '1.3.11'
+    ext.kotlin_version = '1.3.20'
+    ext.artifactoryUsername = System.getenv("artifactory_user")
+    ext.artifactoryPassword = System.getenv("artifactory_password")
+    ext.artifactoryUrl = System.getenv("artifactory_url")
+    ext.artifactoryRepo = System.getenv("artifactory_repo")
+    
     repositories { jcenter() }
 
     dependencies {
+        classpath "guru.stefma.artifactorypublish:artifactorypublish:0.0.4"
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
     }
 }
