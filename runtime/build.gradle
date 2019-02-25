@@ -13,7 +13,7 @@ repositories {
 
 dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
-    implementation 'com.github.cretz.pbandk:protoc-gen-kotlin-jvm:0.3.0'
+    api 'com.github.cretz.pbandk:protoc-gen-kotlin-jvm:0.3.0'
 
     testCompile group: 'junit', name: 'junit', version: '4.12'
 }
@@ -26,18 +26,13 @@ compileTestKotlin {
 }
 
 jar {
-    from {
-        configurations.compileClasspath.findResults {
-            if (it.name.contains("pbandk-runtime-jvm-0.3.0.jar")) zipTree(it)
-        }
-    }
     exclude('**/META-INF/pbandk-runtime-jvm.kotlin_module')
 }
 
 artifactoryPublish {
     groupId = 'jp.co.panpanini'
     artifactId = 'protok-runtime'
-    publishVersion = "0.0.6"
+    publishVersion = "0.0.9"
     artifactoryUrl = artifactoryUrl
     artifactoryRepo = artifactoryRepo
     artifactoryUser = artifactoryUsername
