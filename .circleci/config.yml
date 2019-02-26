@@ -9,23 +9,44 @@ jobs:
       # Customize the JVM maximum heap limit
       JVM_OPTS: -Xmx3200m
       TERM: dumb
+    pull_request:
+      steps:
+        - checkout
 
-    steps:
-      - checkout
+        # Download and cache dependencies
+        - restore_cache:
+            keys:
+              - v1-dependencies-{{ checksum "build.gradle" }}
+              # fallback to using the latest cache if no exact match is found
+              - v1-dependencies-
 
-      # Download and cache dependencies
-      - restore_cache:
-          keys:
-            - v1-dependencies-{{ checksum "build.gradle" }}
-            # fallback to using the latest cache if no exact match is found
-            - v1-dependencies-
+        - run: gradle dependencies
 
-      - run: gradle dependencies
+        - save_cache:
+            paths:
+              - ~/.gradle
+            key: v1-dependencies-{{ checksum "build.gradle" }}
 
-      - save_cache:
-          paths:
-            - ~/.gradle
-          key: v1-dependencies-{{ checksum "build.gradle" }}
+        # run tests!
+        - run: gradle test
 
-      # run tests!
-      - run: gradle test
+      release:
+        steps:
+          - checkout
+
+          # Download and cache dependencies
+          - restore_cache:
+              keys:
+                - v1-dependencies-{{ checksum "build.gradle" }}
+                # fallback to using the latest cache if no exact match is found
+                - v1-dependencies-
+
+          - run: gradle dependencies
+
+          - save_cache:
+              paths:
+                - ~/.gradle
+              key: v1-dependencies-{{ checksum "build.gradle" }}
+
+          # run tests!
+          - run: gradle jar
