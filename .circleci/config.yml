@@ -31,6 +31,9 @@ jobs:
         - run: gradle test
 
       release:
+        branches:
+          only:
+            - master
         steps:
           - checkout
 
