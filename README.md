@@ -28,3 +28,6 @@ implementation ('jp.co.panpanini:protok-retrofit-converter:0.0.30')
 - clean up code
 - refactor code generated using only strings (use KotlinPoet correctly)
 - tests 😇
+
+## Acknowledgments 
+This project is heavily influenced by [pbandk](https://github.com/cretz/pb-and-k/). For a closer-to-finished solution, please take a look!
