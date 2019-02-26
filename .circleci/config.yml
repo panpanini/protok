@@ -9,7 +9,6 @@ jobs:
       # Customize the JVM maximum heap limit
       JVM_OPTS: -Xmx3200m
       TERM: dumb
-    pull_request:
       steps:
         - checkout
 
@@ -31,6 +30,14 @@ jobs:
         - run: gradle test
 
   release:
+    docker:
+      - image: circleci/openjdk:8-jdk
+    working_directory: ~/protok
+
+    environment:
+      # Customize the JVM maximum heap limit
+      JVM_OPTS: -Xmx3200m
+      TERM: dumb
     branches:
       only:
         - master
