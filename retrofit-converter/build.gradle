@@ -4,7 +4,7 @@ apply plugin: 'guru.stefma.artifactorypublish'
 
 sourceCompatibility = 1.8
 
-apply from:"${project.rootDir}/version.gradle"
+apply from: rootProject.file('version.gradle')
 
 repositories {
     mavenCentral()
