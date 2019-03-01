@@ -2,8 +2,10 @@ apply plugin: 'kotlin'
 apply plugin: 'org.jetbrains.kotlin.jvm'
 apply plugin: 'application'
 
+apply from: rootProject.file('version.gradle')
+
 group 'jp.co.panpanini'
-version '0.1-SNAPSHOT'
+version "${versionName()}"
 
 sourceCompatibility = 1.8
 

@@ -2,10 +2,9 @@ apply plugin: 'kotlin'
 apply plugin: 'org.jetbrains.kotlin.jvm'
 apply plugin: 'guru.stefma.artifactorypublish'
 
-group 'jp.co.panpanini'
-version '0.1-SNAPSHOT'
-
 sourceCompatibility = 1.8
+
+apply from: rootProject.file('version.gradle')
 
 repositories {
     mavenCentral()
@@ -35,7 +34,7 @@ compileTestKotlin {
 artifactoryPublish {
     groupId = 'jp.co.panpanini'
     artifactId = 'protok-retrofit-converter'
-    publishVersion = "0.0.30"
+    publishVersion = versionName()
     artifactoryUrl = artifactoryUrl
     artifactoryRepo = artifactoryRepo
     artifactoryUser = artifactoryUsername

@@ -4,6 +4,8 @@ apply plugin: 'guru.stefma.artifactorypublish'
 
 sourceCompatibility = 1.8
 
+apply from: rootProject.file('version.gradle')
+
 repositories {
     mavenCentral()
     maven { url "https://kotlin.bintray.com/kotlinx" }
@@ -32,7 +34,7 @@ jar {
 artifactoryPublish {
     groupId = 'jp.co.panpanini'
     artifactId = 'protok-runtime'
-    publishVersion = "0.0.9"
+    publishVersion = versionName()
     artifactoryUrl = artifactoryUrl
     artifactoryRepo = artifactoryRepo
     artifactoryUser = artifactoryUsername
