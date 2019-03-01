@@ -35,7 +35,7 @@ compileTestKotlin {
 artifactoryPublish {
     groupId = 'jp.co.panpanini'
     artifactId = 'protok-retrofit-converter'
-    publishVersion = "0.0.30"
+    publishVersion = versionName
     artifactoryUrl = artifactoryUrl
     artifactoryRepo = artifactoryRepo
     artifactoryUser = artifactoryUsername
