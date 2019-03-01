@@ -4,6 +4,8 @@ apply plugin: 'guru.stefma.artifactorypublish'
 
 sourceCompatibility = 1.8
 
+apply from:"${project.rootDir}/version.gradle"
+
 repositories {
     mavenCentral()
     maven { url "https://kotlin.bintray.com/kotlinx" }
