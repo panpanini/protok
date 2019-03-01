@@ -34,7 +34,7 @@ jar {
 artifactoryPublish {
     groupId = 'jp.co.panpanini'
     artifactId = 'protok-runtime'
-    publishVersion = versionName
+    publishVersion = versionName()
     artifactoryUrl = artifactoryUrl
     artifactoryRepo = artifactoryRepo
     artifactoryUser = artifactoryUsername
