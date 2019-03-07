@@ -150,8 +150,7 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
         val funSpec = FunSpec.builder("newBuilder")
                 .returns(builder)
         val codeBlock = CodeBlock.Builder()
-                .addStatement("val builder =  Builder()")
-                .indent()
+                .add("return Builder()\n")
 
         type.fields.map {
             when (it) {
@@ -162,15 +161,15 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
                 is File.Field.OneOf -> TODO()
             }
         }.forEach {
-            codeBlock.addStatement(it)
+            codeBlock.indent()
+                    .add("$it\n")
+                    .unindent()
         }
-
         //unknownFields
-        codeBlock.addStatement(".unknownFields(unknownFields)")
+        codeBlock.indent()
+                .add(".unknownFields(unknownFields)")
                 .unindent()
-
-        // return builder
-        codeBlock.addStatement("return builder")
+                .add("\n")
 
         funSpec.addCode(codeBlock.build())
         return funSpec.build()
