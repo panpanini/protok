@@ -287,7 +287,7 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
                 }
             }
             requiresExplicitTypeWithVal -> {
-                codeBlock.addStatement("var $kotlinFieldName: ${kotlinValueType(true)} = $defaultValue")
+                codeBlock.addStatement("var $kotlinFieldName: ${kotlinValueType(false)} = $defaultValue")
             }
             else -> {
                 codeBlock.addStatement("var $kotlinFieldName = $defaultValue")
@@ -321,8 +321,9 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
 
     private fun createMessageMergeExtension(type: File.Type.Message, typeName: ClassName): FunSpec {
         val codeBlock = CodeBlock.builder()
-                .add("val obj = ")
+                .add("return ")
                 .addStatement("other?.copy(")
+                .indent()
         type.fields.mapNotNull {
             when (it) {
                 is File.Field.Standard -> buildStandardFieldMerge(it)
@@ -332,8 +333,8 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
             codeBlock.addStatement("$it,")
         }
         codeBlock.addStatement("unknownFields = unknownFields + other.unknownFields")
-                .addStatement(") ?: this")
-                .addStatement("return obj")
+                .unindent()
+                .add(") ?: this\n")
         return FunSpec.builder("protoMergeImpl")
                 .receiver(typeName)
                 .returns(typeName)
@@ -379,7 +380,7 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
                 .addModifiers(KModifier.OVERRIDE)
                 .addCode(
                         CodeBlock.builder()
-                                .add("return Companion.protoUnmarshal(protoUnmarshal)")
+                                .add("return Companion.protoUnmarshal(protoUnmarshal)\n")
                                 .build()
                 )
 
