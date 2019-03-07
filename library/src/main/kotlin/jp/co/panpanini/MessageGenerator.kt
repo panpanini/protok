@@ -216,13 +216,13 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
                 .build())
 
         val code = CodeBlock.builder()
-                .add("val obj = %T(", typeName)
+                .add("return %T(", typeName)
 
         type.fields.map {
             when (it) {
                 is File.Field.Standard -> {
                     CodeBlock.builder()
-                            .add("${it.kotlinFieldName}, ")
+                            .add("${it.kotlinFieldName},·")
                             .build()
                 }
                 is File.Field.OneOf -> TODO()
@@ -231,8 +231,7 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
             code.add(it)
         }
         code.add("unknownFields")
-                .addStatement(")")
-                .addStatement("return obj")
+                .add(")\n")
 
         val build = FunSpec.builder("build")
                 .returns(typeName)
