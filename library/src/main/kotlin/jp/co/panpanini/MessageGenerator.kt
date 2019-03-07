@@ -417,7 +417,7 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
         //TODO: clean this up - its a little difficult to follow. maybe create a function for it
         codeBlock.beginControlFlow("while (true)")
         codeBlock.beginControlFlow("when (${unMarshalParameter.name}.readTag())")
-                .addStatement("0 -> return ${typeName.simpleName}(\n${doneKotlinFields.map { "$it!!" }.joinToString()}${if(doneKotlinFields.isNotEmpty()) ", " else ""}${unMarshalParameter.name}.unknownFields()\n)")
+                .addStatement("0 ->·return·${typeName.simpleName}(${doneKotlinFields.map { "$it" }.joinToString()}${if(doneKotlinFields.isNotEmpty()) ",·" else ""}${unMarshalParameter.name}.unknownFields())")
         type.sortedStandardFieldsWithOneOfs().map { (field, oneOf) ->
             val tags = mutableListOf(field.tag)
             val fieldBlock = CodeBlock.builder()
