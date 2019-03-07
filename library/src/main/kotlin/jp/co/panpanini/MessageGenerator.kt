@@ -568,7 +568,7 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
             codeBlock.add(it)
         }
         // unknownFields
-        codeBlock.addStatement("protoSize += unknownFields.entries.sumBy {\n it.value.size()\n }")
+        codeBlock.addStatement("protoSize += unknownFields.entries.sumBy·{·it.value.size()·}")
 
         codeBlock.addStatement("return protoSize")
 
