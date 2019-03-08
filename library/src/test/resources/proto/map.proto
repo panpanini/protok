@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package api;
+
+message Mappy {
+    string id = 1;
+    map<string, Thing> things = 2;
+}
+
+message Thing {
+    string id = 1;
+}
