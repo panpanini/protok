@@ -150,8 +150,7 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
         val funSpec = FunSpec.builder("newBuilder")
                 .returns(builder)
         val codeBlock = CodeBlock.Builder()
-                .addStatement("val builder =  Builder()")
-                .indent()
+                .add("return Builder()\n")
 
         type.fields.map {
             when (it) {
@@ -162,15 +161,15 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
                 is File.Field.OneOf -> TODO()
             }
         }.forEach {
-            codeBlock.addStatement(it)
+            codeBlock.indent()
+                    .add("$it\n")
+                    .unindent()
         }
-
         //unknownFields
-        codeBlock.addStatement(".unknownFields(unknownFields)")
+        codeBlock.indent()
+                .add(".unknownFields(unknownFields)")
                 .unindent()
-
-        // return builder
-        codeBlock.addStatement("return builder")
+                .add("\n")
 
         funSpec.addCode(codeBlock.build())
         return funSpec.build()
@@ -217,13 +216,13 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
                 .build())
 
         val code = CodeBlock.builder()
-                .add("val obj = %T(", typeName)
+                .add("return %T(", typeName)
 
         type.fields.map {
             when (it) {
                 is File.Field.Standard -> {
                     CodeBlock.builder()
-                            .add("${it.kotlinFieldName}, ")
+                            .add("${it.kotlinFieldName},·")
                             .build()
                 }
                 is File.Field.OneOf -> TODO()
@@ -232,8 +231,7 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
             code.add(it)
         }
         code.add("unknownFields")
-                .addStatement(")")
-                .addStatement("return obj")
+                .add(")\n")
 
         val build = FunSpec.builder("build")
                 .returns(typeName)
@@ -289,7 +287,7 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
                 }
             }
             requiresExplicitTypeWithVal -> {
-                codeBlock.addStatement("var $kotlinFieldName: ${kotlinValueType(true)} = $defaultValue")
+                codeBlock.addStatement("var $kotlinFieldName: ${kotlinValueType(false)} = $defaultValue")
             }
             else -> {
                 codeBlock.addStatement("var $kotlinFieldName = $defaultValue")
@@ -323,8 +321,9 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
 
     private fun createMessageMergeExtension(type: File.Type.Message, typeName: ClassName): FunSpec {
         val codeBlock = CodeBlock.builder()
-                .add("val obj = ")
+                .add("return ")
                 .addStatement("other?.copy(")
+                .indent()
         type.fields.mapNotNull {
             when (it) {
                 is File.Field.Standard -> buildStandardFieldMerge(it)
@@ -334,8 +333,8 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
             codeBlock.addStatement("$it,")
         }
         codeBlock.addStatement("unknownFields = unknownFields + other.unknownFields")
-                .addStatement(") ?: this")
-                .addStatement("return obj")
+                .unindent()
+                .add(") ?: this\n")
         return FunSpec.builder("protoMergeImpl")
                 .receiver(typeName)
                 .returns(typeName)
@@ -381,7 +380,7 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
                 .addModifiers(KModifier.OVERRIDE)
                 .addCode(
                         CodeBlock.builder()
-                                .add("return Companion.protoUnmarshal(protoUnmarshal)")
+                                .add("return Companion.protoUnmarshal(protoUnmarshal)\n")
                                 .build()
                 )
 
@@ -418,7 +417,7 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
         //TODO: clean this up - its a little difficult to follow. maybe create a function for it
         codeBlock.beginControlFlow("while (true)")
         codeBlock.beginControlFlow("when (${unMarshalParameter.name}.readTag())")
-                .addStatement("0 -> return ${typeName.simpleName}(\n${doneKotlinFields.map { "$it!!" }.joinToString()}${if(doneKotlinFields.isNotEmpty()) ", " else ""}${unMarshalParameter.name}.unknownFields()\n)")
+                .addStatement("0 ->·return·${typeName.simpleName}(${doneKotlinFields.map { "$it" }.joinToString()}${if(doneKotlinFields.isNotEmpty()) ",·" else ""}${unMarshalParameter.name}.unknownFields())")
         type.sortedStandardFieldsWithOneOfs().map { (field, oneOf) ->
             val tags = mutableListOf(field.tag)
             val fieldBlock = CodeBlock.builder()
@@ -569,7 +568,7 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
             codeBlock.add(it)
         }
         // unknownFields
-        codeBlock.addStatement("protoSize += unknownFields.entries.sumBy {\n it.value.size()\n }")
+        codeBlock.addStatement("protoSize += unknownFields.entries.sumBy·{·it.value.size()·}")
 
         codeBlock.addStatement("return protoSize")
 
