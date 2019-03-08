@@ -24,9 +24,7 @@ data class Thing(@JvmField val id: String = "", val unknownFields: Map<Int, Unkn
         if (id != DEFAULT_ID) {
             protoSize += pbandk.Sizer.tagSize(1) + pbandk.Sizer.stringSize(id)
         }
-        protoSize += unknownFields.entries.sumBy {
-                 it.value.size()
-                 }
+        protoSize += unknownFields.entries.sumBy { it.value.size() }
         return protoSize
     }
 
@@ -40,12 +38,9 @@ data class Thing(@JvmField val id: String = "", val unknownFields: Map<Int, Unkn
         }
     }
 
-    fun Thing.protoMergeImpl(other: Thing?): Thing {
-        val obj = other?.copy(
+    fun Thing.protoMergeImpl(other: Thing?): Thing = other?.copy(
         unknownFields = unknownFields + other.unknownFields
-        ) ?: this
-        return obj
-    }
+    ) ?: this
 
     override fun protoMarshal(marshaller: Marshaller) = protoMarshalImpl(marshaller)
 
@@ -55,12 +50,10 @@ data class Thing(@JvmField val id: String = "", val unknownFields: Map<Int, Unkn
 
     override fun protoUnmarshal(protoUnmarshal: Unmarshaller): Thing =
             Companion.protoUnmarshal(protoUnmarshal)
-    fun newBuilder(): Builder {
-        val builder =  Builder()
-            .id(id)
-            .unknownFields(unknownFields)
-        return builder
-    }
+
+    fun newBuilder(): Builder = Builder()
+        .id(id)
+        .unknownFields(unknownFields)
 
     companion object : Message.Companion<Thing> {
         @JvmField
@@ -70,9 +63,7 @@ data class Thing(@JvmField val id: String = "", val unknownFields: Map<Int, Unkn
             var id = ""
             while (true) {
                 when (protoUnmarshal.readTag()) {
-                    0 -> return Thing(
-                            id!!, protoUnmarshal.unknownFields()
-                            )
+                    0 -> return Thing(id, protoUnmarshal.unknownFields())
                     10 -> id = protoUnmarshal.readString()
                     else -> protoUnmarshal.unknownField()
                 }
@@ -98,9 +89,6 @@ data class Thing(@JvmField val id: String = "", val unknownFields: Map<Int, Unkn
             return this
         }
 
-        fun build(): Thing {
-            val obj = Thing(id, unknownFields)
-            return obj
-        }
+        fun build(): Thing = Thing(id, unknownFields)
     }
 }

@@ -31,9 +31,7 @@ data class Mappy(
         if (things.isNotEmpty()) {
             protoSize += pbandk.Sizer.mapSize(2, things, api.Mappy::ThingsEntry)
         }
-        protoSize += unknownFields.entries.sumBy {
-                 it.value.size()
-                 }
+        protoSize += unknownFields.entries.sumBy { it.value.size() }
         return protoSize
     }
 
@@ -51,13 +49,10 @@ data class Mappy(
         }
     }
 
-    fun Mappy.protoMergeImpl(other: Mappy?): Mappy {
-        val obj = other?.copy(
+    fun Mappy.protoMergeImpl(other: Mappy?): Mappy = other?.copy(
         things = things + other.things,
         unknownFields = unknownFields + other.unknownFields
-        ) ?: this
-        return obj
-    }
+    ) ?: this
 
     override fun protoMarshal(marshaller: Marshaller) = protoMarshalImpl(marshaller)
 
@@ -67,13 +62,11 @@ data class Mappy(
 
     override fun protoUnmarshal(protoUnmarshal: Unmarshaller): Mappy =
             Companion.protoUnmarshal(protoUnmarshal)
-    fun newBuilder(): Builder {
-        val builder =  Builder()
-            .id(id)
-            .things(things)
-            .unknownFields(unknownFields)
-        return builder
-    }
+
+    fun newBuilder(): Builder = Builder()
+        .id(id)
+        .things(things)
+        .unknownFields(unknownFields)
 
     data class ThingsEntry(
         override val key: String,
@@ -93,9 +86,7 @@ data class Mappy(
             if (value != DEFAULT_VALUE) {
                 protoSize += pbandk.Sizer.tagSize(2) + pbandk.Sizer.messageSize(value)
             }
-            protoSize += unknownFields.entries.sumBy {
-                     it.value.size()
-                     }
+            protoSize += unknownFields.entries.sumBy { it.value.size() }
             return protoSize
         }
 
@@ -113,13 +104,10 @@ data class Mappy(
             }
         }
 
-        fun ThingsEntry.protoMergeImpl(other: ThingsEntry?): ThingsEntry {
-            val obj = other?.copy(
+        fun ThingsEntry.protoMergeImpl(other: ThingsEntry?): ThingsEntry = other?.copy(
             value = value?.plus(other.value) ?: value,
             unknownFields = unknownFields + other.unknownFields
-            ) ?: this
-            return obj
-        }
+        ) ?: this
 
         override fun protoMarshal(marshaller: Marshaller) = protoMarshalImpl(marshaller)
 
@@ -129,6 +117,7 @@ data class Mappy(
 
         override fun protoUnmarshal(protoUnmarshal: Unmarshaller): ThingsEntry =
                 Companion.protoUnmarshal(protoUnmarshal)
+
         companion object : Message.Companion<ThingsEntry> {
             @JvmField
             val DEFAULT_KEY: String = ""
@@ -138,12 +127,10 @@ data class Mappy(
 
             override fun protoUnmarshal(protoUnmarshal: Unmarshaller): ThingsEntry {
                 var key = ""
-                var value: api.Thing? = api.Thing()
+                var value: api.Thing = api.Thing()
                 while (true) {
                     when (protoUnmarshal.readTag()) {
-                        0 -> return ThingsEntry(
-                                key!!, value!!, protoUnmarshal.unknownFields()
-                                )
+                        0 -> return ThingsEntry(key, value, protoUnmarshal.unknownFields())
                         10 -> key = protoUnmarshal.readString()
                         18 -> value = protoUnmarshal.readMessage(api.Thing.Companion)
                         else -> protoUnmarshal.unknownField()
@@ -168,10 +155,8 @@ data class Mappy(
             var things: MessageMap.Builder<String, api.Thing>? = null
             while (true) {
                 when (protoUnmarshal.readTag()) {
-                    0 -> return Mappy(
-                            id!!, pbandk.MessageMap.Builder.fixed(things)!!,
-                                    protoUnmarshal.unknownFields()
-                            )
+                    0 -> return Mappy(id,
+                            pbandk.MessageMap.Builder.fixed(things), protoUnmarshal.unknownFields())
                     10 -> id = protoUnmarshal.readString()
                     18 -> things = protoUnmarshal.readMap(things, api.Mappy.ThingsEntry.Companion,
                             true)
@@ -206,9 +191,6 @@ data class Mappy(
             return this
         }
 
-        fun build(): Mappy {
-            val obj = Mappy(id, things, unknownFields)
-            return obj
-        }
+        fun build(): Mappy = Mappy(id, things, unknownFields)
     }
 }
