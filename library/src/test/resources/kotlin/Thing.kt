@@ -1,10 +1,16 @@
 package api
 
+import java.io.Serializable
 import jp.co.panpanini.Message
+import kotlin.ByteArray
+import kotlin.Int
+import kotlin.String
+import kotlin.collections.Map
+import kotlin.jvm.JvmField
+import kotlin.jvm.JvmStatic
 import pbandk.Marshaller
 import pbandk.UnknownField
 import pbandk.Unmarshaller
-import java.io.Serializable
 
 data class Thing(@JvmField val id: String = "", val unknownFields: Map<Int, UnknownField> =
         emptyMap()) : Message<Thing>, Serializable {
