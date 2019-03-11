@@ -3,12 +3,13 @@ package jp.co.panpanini
 import com.improve_future.case_changer.toSnakeCase
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
-import com.squareup.kotlinpoet.jvm.jvmField
 import pbandk.*
 import pbandk.gen.File
 import java.io.Serializable
 
 class MessageGenerator(private val file: File, private val kotlinTypeMappings: Map<String, String>) {
+
+    private val companionGenerator = MessageCompanionGenerator(file, kotlinTypeMappings)
 
     fun buildMessage(type: File.Type.Message): TypeSpec {
         val className = ClassName("", type.kotlinTypeName)
@@ -71,7 +72,7 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
         typeSpec.addProperty(createProtoSizeVal())
         typeSpec.addFunction(createProtoMarshalFunction())
         typeSpec.addFunction(createPlusOperator(className))
-        typeSpec.addType(createCompanionObject(type, className))
+        typeSpec.addType(companionGenerator.buildCompanion(type, className))
         typeSpec.addFunction(createEncodeFunction())
         typeSpec.addFunction(createProtoUnmarshalFunction(className))
         if (!type.mapEntry) {
@@ -131,18 +132,6 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
                         .build()
                 )
                 .build()
-    }
-
-    private fun createCompanionObject(type: File.Type.Message, typeName: ClassName): TypeSpec {
-        val companion = TypeSpec.companionObjectBuilder()
-                .addSuperinterface(Message.Companion::class.asClassName().parameterizedBy(typeName))
-                .addFunction(createCompanionProtoUnmarshalFunction(type, typeName))
-                .addFunction(createDecodeFunction(type, typeName))
-
-        createDefaultConstants(type)
-                .forEach { companion.addProperty(it) }
-
-        return companion.build()
     }
 
     private fun createNewBuilder(type: File.Type.Message, typeName: ClassName): FunSpec {
@@ -242,28 +231,6 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
         return typeSpec.build()
     }
 
-    private fun createDefaultConstants(type: File.Type.Message): List<PropertySpec> {
-        return type.fields.map {
-            when (it) {
-                is File.Field.Standard -> {
-                    val type = when {
-                        it.repeated && !it.map -> {
-                            it.kotlinValueType(false)
-                        }
-                        else -> it.kotlinValueType(false)
-                    }
-                    PropertySpec.builder(it.defaultValueName, type)
-                            .initializer(it.defaultValue)
-                            .jvmField()
-                            .build()
-                }
-                is File.Field.OneOf -> TODO()
-            }
-
-
-        }
-    }
-
     private fun unknownFieldSpec(): PropertySpec {
         return PropertySpec.builder(
                 "unknownFields" ,
@@ -272,43 +239,6 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
                 .initializer("unknownFields")
                 .build()
     }
-
-    private fun File.Field.Standard.unmarshalLocalVar(): CodeBlock {
-        val codeBlock = CodeBlock.builder()
-
-        when {
-            repeated -> {
-                mapEntry().let {
-                    if (it == null) {
-                        codeBlock.addStatement("var $kotlinFieldName: %T = null", ListWithSize.Builder::class.asTypeName().parameterizedBy(kotlinQualifiedTypeName).copy(nullable = true))
-                    } else {
-                        codeBlock.addStatement("var $kotlinFieldName: %T = null", MessageMap.Builder::class.asTypeName().parameterizedBy(it.mapEntryKeyKotlinType!!, it.mapEntryValueKotlinType!!).copy(nullable = true))
-                    }
-                }
-            }
-            requiresExplicitTypeWithVal -> {
-                codeBlock.addStatement("var $kotlinFieldName: ${kotlinValueType(false)} = $defaultValue")
-            }
-            else -> {
-                codeBlock.addStatement("var $kotlinFieldName = $defaultValue")
-            }
-        }
-        return codeBlock.build()
-    }
-
-    private val File.Field.Standard.requiresExplicitTypeWithVal get() =
-        repeated || (file.version == 2 && optional) || type.requiresExplicitTypeWithVal
-
-    private val File.Field.Type.requiresExplicitTypeWithVal get() =
-        this == File.Field.Type.BYTES || this == File.Field.Type.ENUM || this == File.Field.Type.MESSAGE
-
-    //TODO
-    private val File.Field.Standard.unmarshalVarDone get() =
-        when {
-            map -> "pbandk.MessageMap.Builder.fixed($kotlinFieldName)"
-            repeated -> "pbandk.ListWithSize.Builder.fixed($kotlinFieldName).list"
-            else -> kotlinFieldName
-        }
 
     private val File.Field.Standard.defaultValue get() = when {
         map -> "emptyMap()"
@@ -362,15 +292,6 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
         return TODO()
     }
 
-    private fun createDecodeFunction(type: File.Type.Message, typeName: ClassName): FunSpec {
-        return FunSpec.builder("decode")
-                .returns(typeName)
-                .addParameter("arr", ByteArray::class)
-                .addAnnotation(JvmStatic::class)
-                .addCode("return protoUnmarshal(arr)\n")
-                .build()
-    }
-
     private fun createProtoUnmarshalFunction(typeName: ClassName): FunSpec {
         val unMarshalParameter = ParameterSpec.builder("protoUnmarshal", Unmarshaller::class).build()
 
@@ -386,89 +307,6 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
 
                 .build()
     }
-
-    private fun createCompanionProtoUnmarshalFunction(type: File.Type.Message, typeName: ClassName): FunSpec {
-        val unMarshalParameter = ParameterSpec.builder("protoUnmarshal", Unmarshaller::class).build()
-        val funSpec = FunSpec.builder("protoUnmarshal")
-                .addModifiers(KModifier.OVERRIDE)
-                .returns(typeName)
-                .addParameter(unMarshalParameter)
-
-        // local variables
-        val codeBlock = CodeBlock.builder()
-
-        val doneKotlinFields = type.fields.map {
-            when (it) {
-                is File.Field.Standard -> {
-                    Pair(it.unmarshalLocalVar(), it.unmarshalVarDone)
-                }
-                is File.Field.OneOf -> {
-                    Pair(CodeBlock.builder()
-                            .addStatement("var ${it.kotlinTypeName}: $typeName.${it.kotlinTypeName}? = null")
-                            .build(),
-                            it.kotlinFieldName)
-                }
-            }
-        }.map { (code, unmarshalVar) ->
-            codeBlock.add(code)
-            unmarshalVar
-        }
-
-        //TODO: clean this up - its a little difficult to follow. maybe create a function for it
-        codeBlock.beginControlFlow("while (true)")
-        codeBlock.beginControlFlow("when (${unMarshalParameter.name}.readTag())")
-                .addStatement("0 ->·return·${typeName.simpleName}(${doneKotlinFields.map { "$it" }.joinToString()}${if(doneKotlinFields.isNotEmpty()) ",·" else ""}${unMarshalParameter.name}.unknownFields())")
-        type.sortedStandardFieldsWithOneOfs().map { (field, oneOf) ->
-            val tags = mutableListOf(field.tag)
-            val fieldBlock = CodeBlock.builder()
-            if (field.repeated) {
-                val tag = (field.number shl 3) or if (field.packed) field.type.wireFormat else 2
-                if (field.tag != tag) {
-                    tags.add(tag)
-                }
-            }
-                fieldBlock.add("${tags.joinToString()} -> ")
-                if (oneOf == null) {
-                    fieldBlock.addStatement("${field.kotlinFieldName} = ${field.unmarshalReadExpression}")
-                } else {
-                    val oneOfType = "${typeName.simpleName}.${oneOf.kotlinTypeName}.${oneOf.kotlinFieldTypeNames[field.name]}"
-                    require(!field.repeated)
-                    fieldBlock.addStatement("${oneOf.kotlinFieldName} = $oneOfType(${field.unmarshalReadExpression})")
-                }
-
-            fieldBlock.build()
-        }.forEach {
-            codeBlock.add(it)
-        }
-
-        codeBlock.addStatement(
-                "else -> ${unMarshalParameter.name}.unknownField()"
-        )
-        codeBlock.endControlFlow() // when
-        codeBlock.endControlFlow() // while
-
-        funSpec.addCode(codeBlock.build())
-        return funSpec.build()
-    }
-
-    protected val File.Field.Standard.unmarshalReadExpression get() = type.neverPacked.let { neverPacked ->
-        val repEnd = if (neverPacked) ", true" else ", false"
-        when (type) {
-            File.Field.Type.ENUM ->
-                if (repeated) "protoUnmarshal.readRepeatedEnum($kotlinFieldName, $kotlinQualifiedTypeName.Companion)"
-                else "protoUnmarshal.readEnum($kotlinQualifiedTypeName.Companion)"
-            File.Field.Type.MESSAGE ->
-                if (!repeated) "protoUnmarshal.readMessage($kotlinQualifiedTypeName.Companion)"
-                else if (map) "protoUnmarshal.readMap($kotlinFieldName, $kotlinQualifiedTypeName.Companion$repEnd)"
-                else "protoUnmarshal.readRepeatedMessage($kotlinFieldName, $kotlinQualifiedTypeName.Companion$repEnd)"
-            else -> {
-                if (repeated) "protoUnmarshal.readRepeated($kotlinFieldName, protoUnmarshal::${type.readMethod}$repEnd)"
-                else "protoUnmarshal.${type.readMethod}()"
-            }
-        }
-    }
-
-    protected val File.Field.Type.readMethod get() = "read" + string.capitalize()
 
     private fun createEncodeFunction(): FunSpec {
         return FunSpec.builder("encode")
@@ -624,7 +462,7 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
 
     private fun File.Field.Standard.mapConstructorReference(): CodeBlock {
         return CodeBlock.of(
-                kotlinQualifiedTypeName.let { it ->
+                kotlinQualifiedTypeName.let {
                     val type = it.toString()
                     type.lastIndexOf('.').let { if (it == -1) "::$type" else type.substring(0, it) + "::" + type.substring(it + 1) }
                 }
@@ -636,16 +474,6 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
             repeated -> CodeBlock.of("$kotlinFieldName.isNotEmpty()")
             file.version == 2 && optional -> CodeBlock.of("$kotlinFieldName != $defaultValueName")
             else -> CodeBlock.of("$kotlinFieldName != $defaultValueName")
-        }
-    }
-
-    private fun File.Field.Type.getNonDefaultCheck(fieldName: String): CodeBlock {
-        return when(this) {
-            File.Field.Type.BOOL -> CodeBlock.of(fieldName)
-            File.Field.Type.BYTES -> CodeBlock.of("$fieldName.array.isNotEmpty()")
-            File.Field.Type.ENUM -> CodeBlock.of("$fieldName.value != 0")
-            File.Field.Type.STRING -> CodeBlock.of("$fieldName.isNotEmpty()")
-            else -> CodeBlock.of("$fieldName != $defaultValue")
         }
     }
 
