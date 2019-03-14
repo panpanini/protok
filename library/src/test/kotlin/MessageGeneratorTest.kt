@@ -25,6 +25,20 @@ class MessageGeneratorTest {
         assertThat(files[1].content).isEqualTo(thing)
     }
 
+    @Test
+    fun `language input produces the expected enum class`() {
+        val request = createRequest("language.input")
+        val language = getResourceString("Language.kt", Source)
+
+        val files = CodeGenerator(request).generate()
+
+        assertThat(files.size).isEqualTo(1)
+
+        assertThat(files[0].name).isEqualTo("api/Language.kt")
+
+        assertThat(files[0].content).isEqualTo(language)
+    }
+
     private fun createRequest(resourceName: String) =
             CodeGeneratorRequest.protoUnmarshal(getResourceBytes(resourceName, Input))
 

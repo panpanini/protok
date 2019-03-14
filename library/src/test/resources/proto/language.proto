@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package api;
+
+enum Language {
+    PROTOBUF = 0;
+    KOTLIN   = 1;
+    JAVA     = 2;
+    SWIFT    = 3;
+    GO       = 4;
+}
