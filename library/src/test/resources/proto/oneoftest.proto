@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package api;
+
+message OneOfTest {
+    oneof oneof_field {
+        uint32 oneof_uint32 = 111;
+        string oneof_string = 113;
+        bytes oneof_bytes = 114;
+        bool oneof_bool = 115;
+        uint64 oneof_uint64 = 116;
+        float oneof_float = 117;
+        double oneof_double = 118;
+        Item oneof_item = 119;
+    }
+}
+
+message Item {
+    string id = 1;
+}

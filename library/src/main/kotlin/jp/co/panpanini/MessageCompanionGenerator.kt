@@ -39,7 +39,7 @@ class MessageCompanionGenerator(private val file: File, private val kotlinTypeMa
                 }
                 is File.Field.OneOf -> {
                     Pair(CodeBlock.builder()
-                            .addStatement("var ${it.kotlinTypeName}: $typeName.${it.kotlinTypeName}? = null")
+                            .addStatement("var ${it.kotlinFieldName}: $typeName.${it.kotlinTypeName} = $typeName.${it.kotlinTypeName}.NotSet")
                             .build(),
                             it.kotlinFieldName)
                 }
@@ -110,7 +110,10 @@ class MessageCompanionGenerator(private val file: File, private val kotlinTypeMa
                             .jvmField()
                             .build()
                 }
-                is File.Field.OneOf -> TODO()
+                is File.Field.OneOf -> PropertySpec.builder(it.defaultValueName, it.type)
+                        .initializer(it.defaultValue)
+                        .jvmField()
+                        .build()
             }
         }
     }

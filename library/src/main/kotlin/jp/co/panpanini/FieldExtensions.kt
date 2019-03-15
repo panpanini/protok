@@ -61,3 +61,7 @@ private fun findLocalType(file: File, protoName: String, parent: File.Type.Messa
     }
 }
 
+val File.Field.OneOf.type get() = ClassName("", kotlinTypeName)
+
+val File.Field.OneOf.defaultValue get() = "$kotlinTypeName.NotSet"
+
