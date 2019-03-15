@@ -140,7 +140,7 @@ class MessageCompanionGenerator(private val file: File, private val kotlinTypeMa
 
     private val File.Field.Standard.unmarshalVarDone get() =
         when {
-            map -> "pbandk.MessageMap.Builder.fixed($kotlinFieldName)"
+            map -> "HashMap(pbandk.MessageMap.Builder.fixed($kotlinFieldName))"
             repeated -> "pbandk.ListWithSize.Builder.fixed($kotlinFieldName).list"
             else -> kotlinFieldName
         }

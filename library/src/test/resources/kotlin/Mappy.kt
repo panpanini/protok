@@ -158,7 +158,7 @@ data class Mappy(
             while (true) {
                 when (protoUnmarshal.readTag()) {
                     0 -> return Mappy(id,
-                            pbandk.MessageMap.Builder.fixed(things), protoUnmarshal.unknownFields())
+                            HashMap(pbandk.MessageMap.Builder.fixed(things)), protoUnmarshal.unknownFields())
                     10 -> id = protoUnmarshal.readString()
                     18 -> things = protoUnmarshal.readMap(things, api.Mappy.ThingsEntry.Companion,
                             true)
