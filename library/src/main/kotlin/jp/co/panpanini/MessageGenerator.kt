@@ -1,5 +1,8 @@
 package jp.co.panpanini
 
+import com.improve_future.case_changer.beginWithLowerCase
+import com.improve_future.case_changer.beginWithUpperCase
+import com.improve_future.case_changer.toCamelCase
 import com.improve_future.case_changer.toSnakeCase
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
@@ -32,7 +35,7 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
             val param = when (field) {
                 is File.Field.Standard -> PropertySpec.builder(field.kotlinFieldName, field.kotlinValueType(false)).initializer(field.kotlinFieldName)
 
-                is File.Field.OneOf -> TODO()
+                is File.Field.OneOf -> PropertySpec.builder(field.kotlinFieldName, field.type).initializer(field.kotlinFieldName)
             }
             if (type.mapEntry) {
                 // add override map entry
@@ -66,6 +69,13 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
         }.forEach {
             typeSpec.addType(it)
         }
+
+        // add oneof types as a subtype
+        type.fields
+                .mapNotNull { it as? File.Field.OneOf }
+                .map(this::createOneOfType)
+                .forEach { typeSpec.addType(it) }
+
         typeSpec.addFunction(createMessageSizeExtension(type, className))
         typeSpec.addFunction(createMessageMarshalExtension(type, className))
         typeSpec.addFunction(createMessageMergeExtension(type, className))
@@ -88,7 +98,7 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
             val param = when (field) {
                 is File.Field.Standard -> ParameterSpec.builder(field.kotlinFieldName, field.kotlinValueType(false))
 
-                is File.Field.OneOf -> TODO()
+                is File.Field.OneOf -> ParameterSpec.builder(field.kotlinFieldName, field.type)
             }
             param.build()
         }
@@ -147,7 +157,7 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
                 is File.Field.Standard -> {
                     ".${it.kotlinFieldName}(${it.kotlinFieldName})"
                 }
-                is File.Field.OneOf -> TODO()
+                is File.Field.OneOf -> ".${it.kotlinFieldName}(${it.kotlinFieldName})"
             }
         }.forEach {
             codeBlock.indent()
@@ -173,7 +183,10 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
                         .mutable()
                         .initializer(it.defaultValueName)
                         .build()
-                is File.Field.OneOf -> TODO()
+                is File.Field.OneOf -> PropertySpec.builder(it.kotlinFieldName, it.type)
+                        .mutable()
+                        .initializer(it.defaultValueName)
+                        .build()
             }
         }.forEach {
             typeSpec.addProperty(it)
@@ -192,7 +205,15 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
                                 .build()
                         )
                         .build()
-                is File.Field.OneOf -> TODO()
+                is File.Field.OneOf -> FunSpec.builder(it.kotlinFieldName)
+                        .addParameter(ParameterSpec.builder(it.kotlinFieldName, it.type.copy(nullable = true)).build())
+                        .returns(builder)
+                        .addCode(CodeBlock.builder()
+                                .addStatement("this.${it.kotlinFieldName} = ${it.kotlinFieldName} ?: ${it.defaultValueName}")
+                                .addStatement("return this")
+                                .build()
+                        )
+                        .build()
             }
         }.forEach {
             typeSpec.addFunction(it)
@@ -214,7 +235,10 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
                             .add("${it.kotlinFieldName},·")
                             .build()
                 }
-                is File.Field.OneOf -> TODO()
+                is File.Field.OneOf ->
+                    CodeBlock.builder()
+                            .add("${it.kotlinFieldName},·")
+                            .build()
             }
         }.forEach {
             code.add(it)
@@ -240,6 +264,12 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
                 .build()
     }
 
+    private val File.Field.defaultValue get() = when(this) {
+        is File.Field.Standard -> defaultValue
+        is File.Field.OneOf -> defaultValue
+
+    }
+
     private val File.Field.Standard.defaultValue get() = when {
         map -> "emptyMap()"
         repeated -> "emptyList()"
@@ -248,6 +278,8 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
         type == File.Field.Type.MESSAGE -> "$kotlinQualifiedTypeName()"
         else -> type.defaultValue
     }
+
+    private val File.Field.OneOf.defaultValue get() = "$kotlinTypeName.NotSet"
 
     private fun createMessageMergeExtension(type: File.Type.Message, typeName: ClassName): FunSpec {
         val codeBlock = CodeBlock.builder()
@@ -289,7 +321,28 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
     }
 
     private fun buildOneOfFieldMerge(field: File.Field.OneOf): CodeBlock {
-        return TODO()
+        val codeBlock = CodeBlock.builder()
+                .add("${field.kotlinFieldName}·=·")
+
+        if (field.fields.any { it.type == File.Field.Type.MESSAGE }) {
+            codeBlock.beginControlFlow("when")
+            field.fields
+                    .filter { it.type == File.Field.Type.MESSAGE }
+                    .forEach {
+                        codeBlock.beginControlFlow("this.${field.kotlinFieldName} is ${field.kotlinTypeName}.${it.kotlinFieldName.beginWithUpperCase()} && other.${field.kotlinFieldName} is ${field.kotlinTypeName}.${it.kotlinFieldName.beginWithUpperCase()} ->")
+                                .addStatement("${field.kotlinTypeName}.${it.kotlinFieldName.beginWithUpperCase()}(this.${field.kotlinFieldName}.${it.kotlinFieldName} + other.${field.kotlinFieldName}.${it.kotlinFieldName})")
+                                .endControlFlow()
+                    }
+            codeBlock.beginControlFlow("else ->")
+                    .add("if·(this.${field.kotlinFieldName}·is·${field.kotlinTypeName}.NotSet)·other.${field.kotlinFieldName}·else·this.${field.kotlinFieldName}\n")
+                    .endControlFlow()
+
+            codeBlock.endControlFlow()
+        } else {
+            codeBlock.add("if·(this.${field.kotlinFieldName}·is·${field.kotlinTypeName}.NotSet)·other.${field.kotlinFieldName}·else·this.${field.kotlinFieldName}")
+        }
+
+        return codeBlock.build()
     }
 
     private fun createProtoUnmarshalFunction(typeName: ClassName): FunSpec {
@@ -337,7 +390,7 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
                         val subclassName = "${typeName.canonicalName}.${oneOf.kotlinTypeName}.${oneOf.kotlinFieldTypeNames[field.name]}"
 
                         CodeBlock.builder()
-                                .beginControlFlow("if (%s is %s)", oneOf.kotlinFieldName, subclassName)
+                                .beginControlFlow("if (${oneOf.kotlinFieldName} is $subclassName)")
                                 .addStatement(field.writeExpressionToMarshaller(marshalParameter.name, "${oneOf.kotlinFieldName}.${field.kotlinFieldName}"))
                                 .endControlFlow()
                                 .build()
@@ -390,14 +443,30 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
         val codeBlock = CodeBlock.builder()
                 .addStatement("var protoSize = 0")
         type.fields.map {
-            val fieldBlock = CodeBlock.builder()
-            when(it) {
+            val fieldBlock = when(it) {
                 is File.Field.Standard -> {
-                    fieldBlock
+                    CodeBlock.builder()
                             .beginControlFlow("if (${it.getNonDefaultCheck()})")
                             .add("protoSize += ")
                             .addStatement(it.sizeExpression().toString())
                             .endControlFlow()
+                }
+                is File.Field.OneOf -> {
+                    val block = CodeBlock.builder()
+                            .beginControlFlow("if (${it.kotlinFieldName} !is ${it.kotlinTypeName}.NotSet)")
+                            .beginControlFlow("protoSize += ${it.kotlinFieldName}.run")
+                            .beginControlFlow("when (this)")
+
+                    it.fields.forEach { field ->
+                        block.addStatement("is ${it.kotlinTypeName}.${field.kotlinFieldName.beginWithUpperCase()} -> ${field.sizeExpression()}")
+                    }
+
+                    block.addStatement("else -> 0")
+                            .endControlFlow()
+                            .endControlFlow()
+                            .endControlFlow()
+
+                    block
                 }
             }
 
@@ -413,6 +482,42 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
         funSpec.addCode(codeBlock.build())
 
         return funSpec.build()
+    }
+
+    private fun createOneOfType(field: File.Field.OneOf) : TypeSpec {
+        val typeSpec = TypeSpec.classBuilder(field.type)
+                .addModifiers(KModifier.SEALED)
+
+        field.fields.map { nestedField ->
+                    TypeSpec.classBuilder(nestedField.kotlinFieldName.beginWithUpperCase())
+                            .superclass(field.type)
+                            .addModifiers(KModifier.DATA)
+                            .addProperty(
+                                    PropertySpec.builder(nestedField.kotlinFieldName, nestedField.kotlinValueType(false))
+                                            .initializer(nestedField.kotlinFieldName)
+                                            .build()
+                            )
+                            .primaryConstructor(
+                                    FunSpec.constructorBuilder()
+                                            .addParameter(ParameterSpec.builder(nestedField.kotlinFieldName, nestedField.kotlinValueType(false))
+                                                    .defaultValue(CodeBlock.of(nestedField.defaultValue))
+                                                    .build())
+                                            .build()
+                            )
+                            .build()
+                }
+                .forEach {
+                    typeSpec.addType(it)
+                }
+
+        // default NotSet type
+        typeSpec.addType(
+                TypeSpec.objectBuilder("NotSet")
+                        .superclass(field.type)
+                        .build()
+        )
+
+        return typeSpec.build()
     }
 
     private fun File.Field.Standard.sizeExpression(): CodeBlock {

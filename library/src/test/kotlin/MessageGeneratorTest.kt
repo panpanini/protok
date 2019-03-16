@@ -39,6 +39,24 @@ class MessageGeneratorTest {
         assertThat(files[0].content).isEqualTo(language)
     }
 
+
+    @Test
+    fun `oneoftest input produces the expected oneof class`() {
+        val request = createRequest("oneoftest.input")
+        val oneOfTest = getResourceString("OneOfTest.kt", Source)
+        val item = getResourceString("Item.kt", Source)
+
+        val files = CodeGenerator(request).generate()
+
+        assertThat(files.size).isEqualTo(2)
+
+        assertThat(files[0].name).isEqualTo("api/OneOfTest.kt")
+        assertThat(files[1].name).isEqualTo("api/Item.kt")
+
+        assertThat(files[0].content).isEqualTo(oneOfTest)
+        assertThat(files[1].content).isEqualTo(item)
+    }
+
     private fun createRequest(resourceName: String) =
             CodeGeneratorRequest.protoUnmarshal(getResourceBytes(resourceName, Input))
 
