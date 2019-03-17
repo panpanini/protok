@@ -42,4 +42,4 @@ jar {
 }
 
 mainClassName = "jp.co.panpanini.MainKt"
-applicationName = "protok"
+applicationName = "protoc-gen-kotlin"
