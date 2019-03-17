@@ -192,10 +192,18 @@ The companion object itself holds all (known) values for this Enum, and these ca
 #### fromValue/fromName
 There are two functions to help in getting the correct value for an enum when you only have the `value` or `name`, these are `fromValue()` and `fromName()` respectively. 
 **Note** `fromName()` will set the `value` to `-1` if it cannot find a known enum case. This is not efficient when converted to a wire representation of the enum (as enum values are represented as a `varint`), so it is advised not to use this option wherever possible. 
+## How to contribute
+Clone the repo & send a PR! :tada:
+Code related to the `code generator` lives in the `library` module
+Code related to the runtime components is in the `runtime` module
+Code related to the Retrofit Converter is in the `retrofit-converter` module.
 ## TODO
 - custom services for RPC
 - refactor code generated using only strings (use KotlinPoet correctly)
 - ensure both proto2 and proto3 support
+- tests
+    - Retrofit-converter
+    - test for both proto2 and proto3
 
 
 ## Acknowledgments 
