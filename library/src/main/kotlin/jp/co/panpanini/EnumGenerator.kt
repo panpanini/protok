@@ -11,36 +11,28 @@ class EnumGenerator {
 
     fun buildEnum(type: File.Type.Enum): TypeSpec {
         val className = ClassName("", type.kotlinTypeName)
-        val typeSpec = TypeSpec.classBuilder(className)
-                .addModifiers(KModifier.DATA)
+        val typeSpec = TypeSpec.enumBuilder(className)
                 .addSuperinterface(Serializable::class)
                 .primaryConstructor(
                         FunSpec.constructorBuilder()
                                 .addParameter("value", Int::class, KModifier.OVERRIDE)
-                                .addParameter(ParameterSpec.builder("name", String::class).addAnnotation(JvmField::class).build())
                                 .build()
                 )
                 .addSuperinterface(Message.Enum::class)
+
+        type.values.forEach {
+            typeSpec.addEnumConstant(it.kotlinValueName, TypeSpec.anonymousClassBuilder()
+                    .addSuperclassConstructorParameter("${it.number}")
+                    .build())
+        }
 
         val companion = TypeSpec.companionObjectBuilder()
                 .addSuperinterface(Message.Enum.Companion::class.asClassName().parameterizedBy(className))
 
 
-        type.values.forEach {
-            companion.addProperty(
-                    PropertySpec.builder(
-                            it.kotlinValueName,
-                            ClassName.bestGuess(type.kotlinTypeName)
-                    )
-                            .initializer("%T(${it.number}, %S)", ClassName.bestGuess(type.kotlinTypeName), it.name)
-                            .addAnnotation(JvmField::class)
-                            .build()
-            )
-        }
         companion.addFunction(createFromValueFunction(type.values, className))
         companion.addFunction(createFromNameFunction(type.values, className))
         typeSpec.addProperty(PropertySpec.builder("value", Int::class).initializer("value").build())
-        typeSpec.addProperty(PropertySpec.builder("name", String::class).initializer("name").build())
         typeSpec.addType(companion.build())
         typeSpec.addFunction(createToStringFunction())
         return typeSpec.build()
@@ -52,7 +44,7 @@ class EnumGenerator {
         values.forEach {
             whenBlock.addStatement("${it.number} -> ${it.kotlinValueName}")
         }
-        whenBlock.addStatement("else -> %T(value, %S)", type, "")
+        whenBlock.addStatement("else -> throw %T(%P)", IllegalArgumentException::class.java, "unsupported enum value: \$value")
         whenBlock.endControlFlow()
 
         return FunSpec.builder("fromValue")
@@ -68,9 +60,9 @@ class EnumGenerator {
         val whenBlock = CodeBlock.builder()
                 .beginControlFlow("return when(name)")
         values.forEach {
-            whenBlock.addStatement("%S -> ${it.kotlinValueName}", it.name)
+            whenBlock.addStatement("%S -> ${it.kotlinValueName}", it.kotlinValueName)
         }
-        whenBlock.addStatement("else -> %T(-1, name)", type)
+        whenBlock.addStatement("else -> throw %T(%P)", IllegalArgumentException::class.java, "unsupported enum name: \$name")
         whenBlock.endControlFlow()
 
         return FunSpec.builder("fromName")
