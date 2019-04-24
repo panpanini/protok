@@ -3,7 +3,6 @@
 package api
 
 import java.io.Serializable
-import java.lang.IllegalArgumentException
 import kotlin.Int
 import kotlin.String
 import kotlin.jvm.JvmStatic
@@ -29,7 +28,7 @@ enum class Language(override val value: Int) : Serializable, Message.Enum {
             2 -> JAVA
             3 -> SWIFT
             4 -> GO
-            else -> throw IllegalArgumentException("""unsupported enum value: $value""")
+            else -> PROTOBUF
         }
 
         @JvmStatic
@@ -39,7 +38,7 @@ enum class Language(override val value: Int) : Serializable, Message.Enum {
             "JAVA" -> JAVA
             "SWIFT" -> SWIFT
             "GO" -> GO
-            else -> throw IllegalArgumentException("""unsupported enum name: $name""")
+            else -> PROTOBUF
         }
     }
 }

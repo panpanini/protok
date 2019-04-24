@@ -44,7 +44,7 @@ class EnumGenerator {
         values.forEach {
             whenBlock.addStatement("${it.number} -> ${it.kotlinValueName}")
         }
-        whenBlock.addStatement("else -> throw %T(%P)", IllegalArgumentException::class.java, "unsupported enum value: \$value")
+        whenBlock.addStatement("else -> ${values.first().kotlinValueName}")
         whenBlock.endControlFlow()
 
         return FunSpec.builder("fromValue")
@@ -62,7 +62,7 @@ class EnumGenerator {
         values.forEach {
             whenBlock.addStatement("%S -> ${it.kotlinValueName}", it.kotlinValueName)
         }
-        whenBlock.addStatement("else -> throw %T(%P)", IllegalArgumentException::class.java, "unsupported enum name: \$name")
+        whenBlock.addStatement("else -> ${values.first().kotlinValueName}")
         whenBlock.endControlFlow()
 
         return FunSpec.builder("fromName")
