@@ -3,31 +3,25 @@
 package api
 
 import java.io.Serializable
+import java.lang.IllegalArgumentException
 import kotlin.Int
 import kotlin.String
-import kotlin.jvm.JvmField
 import kotlin.jvm.JvmStatic
 import pbandk.Message
 
-data class Language(override val value: Int, @JvmField val name: String) : Serializable,
-        Message.Enum {
+enum class Language(override val value: Int) : Serializable, Message.Enum {
+    PROTOBUF(0),
+
+    KOTLIN(1),
+
+    JAVA(2),
+
+    SWIFT(3),
+
+    GO(4);
+
     override fun toString(): String = name
     companion object : Message.Enum.Companion<Language> {
-        @JvmField
-        val PROTOBUF: Language = Language(0, "PROTOBUF")
-
-        @JvmField
-        val KOTLIN: Language = Language(1, "KOTLIN")
-
-        @JvmField
-        val JAVA: Language = Language(2, "JAVA")
-
-        @JvmField
-        val SWIFT: Language = Language(3, "SWIFT")
-
-        @JvmField
-        val GO: Language = Language(4, "GO")
-
         @JvmStatic
         override fun fromValue(value: Int): Language = when(value) {
             0 -> PROTOBUF
@@ -35,7 +29,7 @@ data class Language(override val value: Int, @JvmField val name: String) : Seria
             2 -> JAVA
             3 -> SWIFT
             4 -> GO
-            else -> Language(value, "")
+            else -> throw IllegalArgumentException("""unsupported enum value: $value""")
         }
 
         @JvmStatic
@@ -45,7 +39,7 @@ data class Language(override val value: Int, @JvmField val name: String) : Seria
             "JAVA" -> JAVA
             "SWIFT" -> SWIFT
             "GO" -> GO
-            else -> Language(-1, name)
+            else -> throw IllegalArgumentException("""unsupported enum name: $name""")
         }
     }
 }
