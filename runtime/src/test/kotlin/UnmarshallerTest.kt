@@ -6,10 +6,11 @@ import jp.co.panpanini.Message
 import jp.co.panpanini.Unmarshaller
 import org.junit.Test
 
-import org.junit.Assert.*
-
 class UnmarshallerTest {
 
+
+    private abstract class MockMessage: Message<MockMessage>
+    private abstract class MockCompanion: Message.Companion<MockMessage>
 
     private var stream: CodedInputStream = mock { }
 
@@ -156,7 +157,14 @@ class UnmarshallerTest {
 
     @Test
     fun `readMessage should call stream#pushLimit with the value of stream#readRawVarint32`() {
+        val companion: MockCompanion = mock { }
+        val previousLimit = 100
+        whenever(stream.readRawVarint32()).thenReturn(previousLimit)
+        whenever(stream.isAtEnd).thenReturn(true)
 
+        target.readMessage(companion)
+
+        verify(stream).pushLimit(previousLimit)
     }
 
     @Test
