@@ -265,37 +265,37 @@ class SizerTest {
 
     @Test
     fun `doubleSize should equal 8`() {
-        assertThat(target.doubleSize()).isEqualTo(8)
+        assertThat(target.doubleSize(1.0)).isEqualTo(8)
     }
 
     @Test
     fun `floatSize should equal 4`() {
-        assertThat(target.floatSize()).isEqualTo(4)
+        assertThat(target.floatSize(1f)).isEqualTo(4)
     }
 
     @Test
     fun `fixed32Size should equal 4`() {
-        assertThat(target.fixed32Size()).isEqualTo(4)
+        assertThat(target.fixed32Size(1)).isEqualTo(4)
     }
 
     @Test
     fun `fixed64Size should equal 8`() {
-        assertThat(target.fixed64Size()).isEqualTo(8)
+        assertThat(target.fixed64Size(1L)).isEqualTo(8)
     }
 
     @Test
     fun `sFixed32Size should equal 4`() {
-        assertThat(target.sFixed32Size()).isEqualTo(4)
+        assertThat(target.sFixed32Size(1)).isEqualTo(4)
     }
 
     @Test
     fun `sFixed64Size should equal 8`() {
-        assertThat(target.sFixed64Size()).isEqualTo(8)
+        assertThat(target.sFixed64Size(1L)).isEqualTo(8)
     }
 
     @Test
     fun `boolSize should equal 1`() {
-        assertThat(target.boolSize()).isEqualTo(1)
+        assertThat(target.boolSize(true)).isEqualTo(1)
     }
 
     @Test
