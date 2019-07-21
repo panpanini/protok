@@ -42,7 +42,9 @@ class Marshaller(private val stream: CodedOutputStream, private val bytes: ByteA
 
     fun writeString(value: String) = this.apply { stream.writeStringNoTag(value) }
 
-    fun writeBytes(value: ByteArr) = this.apply { stream.writeByteArrayNoTag(value.array) }
+    fun writeBytes(value: ByteArr) = this.apply { writeBytes(value.array) }
+
+    fun writeBytes(value: ByteArray) = this.apply { stream.writeByteArrayNoTag(value) }
 
     fun writeUnknownFields(fields: Map<Int, UnknownField>) {
         fun writeUnknownFieldValue(fieldNum: Int, v: UnknownField.Value) {
@@ -69,10 +71,10 @@ class Marshaller(private val stream: CodedOutputStream, private val bytes: ByteA
     fun <K, V, T : Message<T>> writeMap(
             tag: Int,
             map: Map<K, V>,
-            createEntry: (K, V, Map<Int, UnknownField>) -> T
+            createEntry: (K, V) -> T
     ) = this.apply {
         map.entries.forEach {
-            writeTag(tag).writeMessage(it as? Message<*> ?: createEntry(it.key, it.value, emptyMap()))
+            writeTag(tag).writeMessage(it as? Message<*> ?: createEntry(it.key, it.value))
         }
     }
 
