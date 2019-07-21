@@ -3,17 +3,16 @@
 package api
 
 import java.io.Serializable
+import jp.co.panpanini.Marshaller
 import jp.co.panpanini.Message
+import jp.co.panpanini.Unmarshaller
 import kotlin.ByteArray
 import kotlin.Int
 import kotlin.String
 import kotlin.collections.Map
 import kotlin.jvm.JvmField
 import kotlin.jvm.JvmStatic
-import pbandk.Marshaller
-import pbandk.MessageMap
 import pbandk.UnknownField
-import pbandk.Unmarshaller
 
 data class Mappy(
     @JvmField val id: String = "",
@@ -156,11 +155,10 @@ data class Mappy(
 
         override fun protoUnmarshal(protoUnmarshal: Unmarshaller): Mappy {
             var id = ""
-            var things: MessageMap.Builder<String, api.Thing>? = null
+            var things: Map<String, api.Thing>? = null
             while (true) {
                 when (protoUnmarshal.readTag()) {
-                    0 -> return Mappy(id,
-                            HashMap(pbandk.MessageMap.Builder.fixed(things)), protoUnmarshal.unknownFields())
+                    0 -> return Mappy(id, HashMap(things), protoUnmarshal.unknownFields())
                     10 -> id = protoUnmarshal.readString()
                     18 -> things = protoUnmarshal.readMap(things, api.Mappy.ThingsEntry.Companion,
                             true)
