@@ -24,7 +24,7 @@ data class Item(@JvmField val id: String = "", val unknownFields: Map<Int, Unkno
     fun Item.protoSizeImpl(): Int {
         var protoSize = 0
         if (id != DEFAULT_ID) {
-            protoSize += pbandk.Sizer.tagSize(1) + pbandk.Sizer.stringSize(id)
+            protoSize += jp.co.panpanini.Sizer.tagSize(1) + jp.co.panpanini.Sizer.stringSize(id)
         }
         protoSize += unknownFields.entries.sumBy { it.value.size() }
         return protoSize

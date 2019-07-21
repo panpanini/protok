@@ -28,10 +28,10 @@ data class Mappy(
     fun Mappy.protoSizeImpl(): Int {
         var protoSize = 0
         if (id != DEFAULT_ID) {
-            protoSize += pbandk.Sizer.tagSize(1) + pbandk.Sizer.stringSize(id)
+            protoSize += jp.co.panpanini.Sizer.tagSize(1) + jp.co.panpanini.Sizer.stringSize(id)
         }
         if (things.isNotEmpty()) {
-            protoSize += pbandk.Sizer.mapSize(2, things, api.Mappy::ThingsEntry)
+            protoSize += jp.co.panpanini.Sizer.mapSize(2, things, api.Mappy::ThingsEntry)
         }
         protoSize += unknownFields.entries.sumBy { it.value.size() }
         return protoSize
@@ -83,10 +83,12 @@ data class Mappy(
         fun ThingsEntry.protoSizeImpl(): Int {
             var protoSize = 0
             if (key != DEFAULT_KEY) {
-                protoSize += pbandk.Sizer.tagSize(1) + pbandk.Sizer.stringSize(key)
+                protoSize += jp.co.panpanini.Sizer.tagSize(1) +
+                        jp.co.panpanini.Sizer.stringSize(key)
             }
             if (value != DEFAULT_VALUE) {
-                protoSize += pbandk.Sizer.tagSize(2) + pbandk.Sizer.messageSize(value)
+                protoSize += jp.co.panpanini.Sizer.tagSize(2) +
+                        jp.co.panpanini.Sizer.messageSize(value)
             }
             protoSize += unknownFields.entries.sumBy { it.value.size() }
             return protoSize

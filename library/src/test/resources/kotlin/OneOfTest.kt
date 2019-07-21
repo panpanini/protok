@@ -31,22 +31,22 @@ data class OneOfTest(@JvmField val oneofField: OneofField = OneofField.NotSet, v
         if (oneofField !is OneofField.NotSet) {
             protoSize += oneofField.run {
                 when (this) {
-                    is OneofField.OneofUint32 -> pbandk.Sizer.tagSize(111) +
-                            pbandk.Sizer.uInt32Size(oneofUint32)
-                    is OneofField.OneofString -> pbandk.Sizer.tagSize(113) +
-                            pbandk.Sizer.stringSize(oneofString)
-                    is OneofField.OneofBytes -> pbandk.Sizer.tagSize(114) +
-                            pbandk.Sizer.bytesSize(oneofBytes)
-                    is OneofField.OneofBool -> pbandk.Sizer.tagSize(115) +
-                            pbandk.Sizer.boolSize(oneofBool)
-                    is OneofField.OneofUint64 -> pbandk.Sizer.tagSize(116) +
-                            pbandk.Sizer.uInt64Size(oneofUint64)
-                    is OneofField.OneofFloat -> pbandk.Sizer.tagSize(117) +
-                            pbandk.Sizer.floatSize(oneofFloat)
-                    is OneofField.OneofDouble -> pbandk.Sizer.tagSize(118) +
-                            pbandk.Sizer.doubleSize(oneofDouble)
-                    is OneofField.OneofItem -> pbandk.Sizer.tagSize(119) +
-                            pbandk.Sizer.messageSize(oneofItem)
+                    is OneofField.OneofUint32 -> jp.co.panpanini.Sizer.tagSize(111) +
+                            jp.co.panpanini.Sizer.uInt32Size(oneofUint32)
+                    is OneofField.OneofString -> jp.co.panpanini.Sizer.tagSize(113) +
+                            jp.co.panpanini.Sizer.stringSize(oneofString)
+                    is OneofField.OneofBytes -> jp.co.panpanini.Sizer.tagSize(114) +
+                            jp.co.panpanini.Sizer.bytesSize(oneofBytes)
+                    is OneofField.OneofBool -> jp.co.panpanini.Sizer.tagSize(115) +
+                            jp.co.panpanini.Sizer.boolSize(oneofBool)
+                    is OneofField.OneofUint64 -> jp.co.panpanini.Sizer.tagSize(116) +
+                            jp.co.panpanini.Sizer.uInt64Size(oneofUint64)
+                    is OneofField.OneofFloat -> jp.co.panpanini.Sizer.tagSize(117) +
+                            jp.co.panpanini.Sizer.floatSize(oneofFloat)
+                    is OneofField.OneofDouble -> jp.co.panpanini.Sizer.tagSize(118) +
+                            jp.co.panpanini.Sizer.doubleSize(oneofDouble)
+                    is OneofField.OneofItem -> jp.co.panpanini.Sizer.tagSize(119) +
+                            jp.co.panpanini.Sizer.messageSize(oneofItem)
                     else -> 0
                 }
             }

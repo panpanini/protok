@@ -6,7 +6,9 @@ import com.improve_future.case_changer.toCamelCase
 import com.improve_future.case_changer.toSnakeCase
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
-import pbandk.*
+import pbandk.Marshaller
+import pbandk.UnknownField
+import pbandk.Unmarshaller
 import pbandk.gen.File
 import java.io.Serializable
 
@@ -521,7 +523,7 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
     }
 
     private fun File.Field.Standard.sizeExpression(): CodeBlock {
-        val sizer = ClassName("pbandk", "Sizer")
+        val sizer = Sizer::class
         val codeBlock = CodeBlock.builder()
 
         when {
