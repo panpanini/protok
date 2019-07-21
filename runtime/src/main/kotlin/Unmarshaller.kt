@@ -6,7 +6,7 @@ import pbandk.ByteArr
 import pbandk.UnknownField
 
 class Unmarshaller(private val stream: CodedInputStream, private val discardUnknownFields: Boolean = false) {
-    var currentUnknownFields = if (discardUnknownFields) null else mutableMapOf<Int, UnknownField>()
+    private var currentUnknownFields = if (discardUnknownFields) null else mutableMapOf<Int, UnknownField>()
 
     companion object {
         fun fromByteArray(array: ByteArray): Unmarshaller {
