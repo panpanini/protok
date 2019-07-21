@@ -3,9 +3,6 @@ package jp.co.panpanini
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.jvm.jvmField
-import pbandk.ListWithSize
-import pbandk.MessageMap
-import pbandk.Unmarshaller
 import pbandk.gen.File
 
 class MessageCompanionGenerator(private val file: File, private val kotlinTypeMappings: Map<String, String>) {
@@ -125,9 +122,9 @@ class MessageCompanionGenerator(private val file: File, private val kotlinTypeMa
             repeated -> {
                 mapEntry().let {
                     if (it == null) {
-                        codeBlock.addStatement("var $kotlinFieldName: %T = null", ListWithSize.Builder::class.asTypeName().parameterizedBy(kotlinQualifiedTypeName(kotlinTypeMappings)).copy(nullable = true))
+                        codeBlock.addStatement("var $kotlinFieldName: %T = null", List::class.asTypeName().parameterizedBy(kotlinQualifiedTypeName(kotlinTypeMappings)).copy(nullable = true))
                     } else {
-                        codeBlock.addStatement("var $kotlinFieldName: %T = null", MessageMap.Builder::class.asTypeName().parameterizedBy(it.mapEntryKeyKotlinType!!, it.mapEntryValueKotlinType!!).copy(nullable = true))
+                        codeBlock.addStatement("var $kotlinFieldName: %T = null", Map::class.asTypeName().parameterizedBy(it.mapEntryKeyKotlinType!!, it.mapEntryValueKotlinType!!).copy(nullable = true))
                     }
                 }
             }
@@ -143,8 +140,8 @@ class MessageCompanionGenerator(private val file: File, private val kotlinTypeMa
 
     private val File.Field.Standard.unmarshalVarDone get() =
         when {
-            map -> "HashMap(pbandk.MessageMap.Builder.fixed($kotlinFieldName))"
-            repeated -> "pbandk.ListWithSize.Builder.fixed($kotlinFieldName).list"
+            map -> "HashMap($kotlinFieldName)"
+            repeated -> kotlinFieldName
             else -> kotlinFieldName
         }
 
