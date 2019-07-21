@@ -5,6 +5,7 @@ import com.nhaarman.mockitokotlin2.whenever
 import jp.co.panpanini.Message
 import jp.co.panpanini.Unmarshaller
 import org.junit.Test
+import org.mockito.ArgumentMatchers.anyInt
 
 class UnmarshallerTest {
 
@@ -165,6 +166,32 @@ class UnmarshallerTest {
         target.readMessage(companion)
 
         verify(stream).pushLimit(previousLimit)
+    }
+
+    @Test
+    fun `readMessage should call companion#protoUnmarshal with the current instance`() {
+        val companion: MockCompanion = mock { }
+        val previousLimit = 100
+        whenever(stream.readRawVarint32()).thenReturn(previousLimit)
+        whenever(stream.isAtEnd).thenReturn(true)
+
+        target.readMessage(companion)
+
+        verify(companion).protoUnmarshal(target)
+    }
+
+    @Test
+    fun `readMessage should call stream#popLimit with the previous limit`() {
+        val companion: MockCompanion = mock { }
+        val previousLimit = 100
+        val popLimit = 200
+        whenever(stream.readRawVarint32()).thenReturn(previousLimit)
+        whenever(stream.pushLimit(anyInt())).thenReturn(popLimit)
+        whenever(stream.isAtEnd).thenReturn(true)
+
+        target.readMessage(companion)
+
+        verify(stream).popLimit(popLimit)
     }
 
     @Test
