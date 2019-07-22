@@ -6,7 +6,7 @@ import com.squareup.kotlinpoet.TypeName
 import pbandk.gen.File
 
 fun File.Field.Standard.unmarshalReadExpression(kotlinTypeMappings: Map<String, String>) = type.neverPacked.let { neverPacked ->
-    val repEnd = if (neverPacked) ", true" else ", false"
+    val repEnd = if (neverPacked) "true," else "false,"
     when (type) {
         File.Field.Type.ENUM ->
             if (repeated) "protoUnmarshal.readRepeatedEnum($kotlinFieldName, ${kotlinQualifiedTypeName(kotlinTypeMappings)}.Companion)"
@@ -16,7 +16,7 @@ fun File.Field.Standard.unmarshalReadExpression(kotlinTypeMappings: Map<String, 
             else if (map) "protoUnmarshal.readMap($kotlinFieldName, ${kotlinQualifiedTypeName(kotlinTypeMappings)}.Companion$repEnd)"
             else "protoUnmarshal.readRepeatedMessage($kotlinFieldName, ${kotlinQualifiedTypeName(kotlinTypeMappings)}.Companion$repEnd)"
         else -> {
-            if (repeated) "protoUnmarshal.readRepeated($kotlinFieldName, protoUnmarshal::${type.readMethod}$repEnd)"
+            if (repeated) "protoUnmarshal.readRepeated($kotlinFieldName, $repEnd protoUnmarshal::${type.readMethod})"
             else "protoUnmarshal.${type.readMethod}()"
         }
     }
