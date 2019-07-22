@@ -2,7 +2,6 @@ package jp.co.panpanini
 
 import com.google.protobuf.CodedOutputStream
 import pbandk.ByteArr
-import pbandk.UnknownField
 
 class Marshaller(private val stream: CodedOutputStream, private val bytes: ByteArray? = null) {
 
