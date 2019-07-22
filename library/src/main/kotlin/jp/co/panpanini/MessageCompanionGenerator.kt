@@ -122,9 +122,9 @@ class MessageCompanionGenerator(private val file: File, private val kotlinTypeMa
             repeated -> {
                 mapEntry().let {
                     if (it == null) {
-                        codeBlock.addStatement("var $kotlinFieldName: %T = null", List::class.asTypeName().parameterizedBy(kotlinQualifiedTypeName(kotlinTypeMappings)).copy(nullable = true))
+                        codeBlock.addStatement("var $kotlinFieldName: %T = emptyList()", List::class.asTypeName().parameterizedBy(kotlinQualifiedTypeName(kotlinTypeMappings)).copy(nullable = false))
                     } else {
-                        codeBlock.addStatement("var $kotlinFieldName: %T = null", Map::class.asTypeName().parameterizedBy(it.mapEntryKeyKotlinType!!, it.mapEntryValueKotlinType!!).copy(nullable = true))
+                        codeBlock.addStatement("var $kotlinFieldName: %T = emptyMap()", Map::class.asTypeName().parameterizedBy(it.mapEntryKeyKotlinType!!, it.mapEntryValueKotlinType!!).copy(nullable = false))
                     }
                 }
             }
