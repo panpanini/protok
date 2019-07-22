@@ -3,10 +3,10 @@
 package api
 
 import java.io.Serializable
+import jp.co.panpanini.Message
 import kotlin.Int
 import kotlin.String
 import kotlin.jvm.JvmStatic
-import pbandk.Message
 
 enum class Language(override val value: Int) : Serializable, Message.Enum {
     PROTOBUF(0),
