@@ -35,7 +35,7 @@ val File.Field.Type.wireFormat get() = when (this) {
 
 val File.Field.Type.standardTypeName get() = when (this) {
     File.Field.Type.BOOL -> Boolean::class.asTypeName()
-    File.Field.Type.BYTES -> pbandk.ByteArr::class.asTypeName()
+    File.Field.Type.BYTES -> ByteArr::class.asTypeName()
     File.Field.Type.DOUBLE -> Double::class.asTypeName()
     File.Field.Type.ENUM -> error("No standard type name for enums")
     File.Field.Type.FIXED32 -> Int::class.asTypeName()
@@ -55,7 +55,7 @@ val File.Field.Type.standardTypeName get() = when (this) {
 
 val File.Field.Type.defaultValue get() = when (this) {
     File.Field.Type.BOOL -> "false"
-    File.Field.Type.BYTES -> "pbandk.ByteArr.empty"
+    File.Field.Type.BYTES -> "ByteArr()"
     File.Field.Type.DOUBLE -> "0.0"
     File.Field.Type.ENUM -> error("No generic default value for enums")
     File.Field.Type.FIXED32, File.Field.Type.INT32, File.Field.Type.SFIXED32,

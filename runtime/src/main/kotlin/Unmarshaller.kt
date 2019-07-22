@@ -2,7 +2,6 @@ package jp.co.panpanini
 
 import com.google.protobuf.CodedInputStream
 import com.google.protobuf.WireFormat
-import pbandk.ByteArr
 
 class Unmarshaller(private val stream: CodedInputStream, private val discardUnknownFields: Boolean = false) {
     private var currentUnknownFields = if (discardUnknownFields) null else mutableMapOf<Int, UnknownField>()

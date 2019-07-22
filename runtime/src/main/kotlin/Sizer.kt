@@ -1,7 +1,6 @@
 package jp.co.panpanini
 
 import com.google.protobuf.CodedOutputStream
-import pbandk.ByteArr
 
 object Sizer {
     fun tagSize(fieldNum: Int): Int {

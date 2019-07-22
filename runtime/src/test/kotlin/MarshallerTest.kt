@@ -3,11 +3,11 @@ import com.nhaarman.mockitokotlin2.mock
 import com.nhaarman.mockitokotlin2.spy
 import com.nhaarman.mockitokotlin2.verify
 import com.nhaarman.mockitokotlin2.whenever
+import jp.co.panpanini.ByteArr
 import jp.co.panpanini.Marshaller
 import jp.co.panpanini.Message
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
-import pbandk.ByteArr
 
 class MarshallerTest {
 

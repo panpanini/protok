@@ -1,7 +1,5 @@
 package jp.co.panpanini
 
-import pbandk.ByteArr
-import pbandk.Sizer
 
 class UnknownField(val fieldNum: Int, val value: Value) {
     constructor(fieldNum: Int, value: Long, fixed: Boolean = false) :
