@@ -4,7 +4,6 @@ import com.improve_future.case_changer.beginWithUpperCase
 import com.improve_future.case_changer.toSnakeCase
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
-import pbandk.UnknownField
 import pbandk.gen.File
 import java.io.Serializable
 

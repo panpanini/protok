@@ -5,6 +5,7 @@ package api
 import java.io.Serializable
 import jp.co.panpanini.Marshaller
 import jp.co.panpanini.Message
+import jp.co.panpanini.UnknownField
 import jp.co.panpanini.Unmarshaller
 import kotlin.ByteArray
 import kotlin.Int
@@ -12,7 +13,6 @@ import kotlin.String
 import kotlin.collections.Map
 import kotlin.jvm.JvmField
 import kotlin.jvm.JvmStatic
-import pbandk.UnknownField
 
 data class Item(@JvmField val id: String = "", val unknownFields: Map<Int, UnknownField> =
         emptyMap()) : Message<Item>, Serializable {
