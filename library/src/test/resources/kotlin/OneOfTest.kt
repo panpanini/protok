@@ -5,6 +5,7 @@ package api
 import java.io.Serializable
 import jp.co.panpanini.Marshaller
 import jp.co.panpanini.Message
+import jp.co.panpanini.UnknownField
 import jp.co.panpanini.Unmarshaller
 import kotlin.Boolean
 import kotlin.ByteArray
@@ -17,7 +18,6 @@ import kotlin.collections.Map
 import kotlin.jvm.JvmField
 import kotlin.jvm.JvmStatic
 import pbandk.ByteArr
-import pbandk.UnknownField
 
 data class OneOfTest(@JvmField val oneofField: OneofField = OneofField.NotSet, val unknownFields:
         Map<Int, UnknownField> = emptyMap()) : Message<OneOfTest>, Serializable {
