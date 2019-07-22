@@ -3,6 +3,7 @@
 package api
 
 import java.io.Serializable
+import jp.co.panpanini.ByteArr
 import jp.co.panpanini.Marshaller
 import jp.co.panpanini.Message
 import jp.co.panpanini.UnknownField
@@ -17,7 +18,6 @@ import kotlin.String
 import kotlin.collections.Map
 import kotlin.jvm.JvmField
 import kotlin.jvm.JvmStatic
-import pbandk.ByteArr
 
 data class OneOfTest(@JvmField val oneofField: OneofField = OneofField.NotSet, val unknownFields:
         Map<Int, UnknownField> = emptyMap()) : Message<OneOfTest>, Serializable {
@@ -126,7 +126,7 @@ data class OneOfTest(@JvmField val oneofField: OneofField = OneofField.NotSet, v
 
         data class OneofString(val oneofString: String = "") : OneofField()
 
-        data class OneofBytes(val oneofBytes: ByteArr = pbandk.ByteArr.empty) : OneofField()
+        data class OneofBytes(val oneofBytes: ByteArr = ByteArr()) : OneofField()
 
         data class OneofBool(val oneofBool: Boolean = false) : OneofField()
 
