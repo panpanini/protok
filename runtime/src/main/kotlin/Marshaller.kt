@@ -12,37 +12,69 @@ class Marshaller(private val stream: CodedOutputStream, private val bytes: ByteA
 
     fun writeTag(fieldNum: Int, wireType: Int) = this.apply { stream.writeInt32NoTag((fieldNum shl 3) or wireType) }
 
-    fun writeDouble(value: Double) = this.apply { stream.writeDoubleNoTag(value) }
+    fun writeDouble(value: Double) {
+        stream.writeDoubleNoTag(value)
+    }
 
-    fun writeFloat(value: Float) = this.apply { stream.writeFloatNoTag(value) }
+    fun writeFloat(value: Float) {
+        stream.writeFloatNoTag(value)
+    }
 
-    fun writeInt32(value: Int) = this.apply { stream.writeInt32NoTag(value) }
+    fun writeInt32(value: Int) {
+        stream.writeInt32NoTag(value)
+    }
 
-    fun writeInt64(value: Long) = this.apply { stream.writeInt64NoTag(value) }
+    fun writeInt64(value: Long) {
+        stream.writeInt64NoTag(value)
+    }
 
-    fun writeUInt32(value: Int) = this.apply { stream.writeUInt32NoTag(value) }
+    fun writeUInt32(value: Int) {
+        stream.writeUInt32NoTag(value)
+    }
 
-    fun writeUInt64(value: Long) = this.apply { stream.writeUInt64NoTag(value) }
+    fun writeUInt64(value: Long) {
+        stream.writeUInt64NoTag(value)
+    }
 
-    fun writeSInt32(value: Int) = this.apply { stream.writeSInt32NoTag(value) }
+    fun writeSInt32(value: Int) {
+        stream.writeSInt32NoTag(value)
+    }
 
-    fun writeSInt64(value: Long) = this.apply { stream.writeSInt64NoTag(value) }
+    fun writeSInt64(value: Long) {
+        stream.writeSInt64NoTag(value)
+    }
 
-    fun writeFixed32(value: Int) = this.apply { stream.writeFixed32NoTag(value) }
+    fun writeFixed32(value: Int) {
+        stream.writeFixed32NoTag(value)
+    }
 
-    fun writeFixed64(value: Long) = this.apply { stream.writeFixed64NoTag(value) }
+    fun writeFixed64(value: Long) {
+        stream.writeFixed64NoTag(value)
+    }
 
-    fun writeSFixed32(value: Int) = this.apply { stream.writeSFixed32NoTag(value) }
+    fun writeSFixed32(value: Int) {
+        stream.writeSFixed32NoTag(value)
+    }
 
-    fun writeSFixed64(value: Long) = this.apply { stream.writeSFixed64NoTag(value) }
+    fun writeSFixed64(value: Long) {
+        stream.writeSFixed64NoTag(value)
+    }
 
-    fun writeBool(value: Boolean) = this.apply { stream.writeBoolNoTag(value) }
+    fun writeBool(value: Boolean) {
+        stream.writeBoolNoTag(value)
+    }
 
-    fun writeString(value: String) = this.apply { stream.writeStringNoTag(value) }
+    fun writeString(value: String) {
+        stream.writeStringNoTag(value)
+    }
 
-    fun writeBytes(value: ByteArr) = this.apply { writeBytes(value.array) }
+    fun writeBytes(value: ByteArr) {
+        writeBytes(value.array)
+    }
 
-    fun writeBytes(value: ByteArray) = this.apply { stream.writeByteArrayNoTag(value) }
+    fun writeBytes(value: ByteArray) {
+        stream.writeByteArrayNoTag(value)
+    }
 
     fun writeUnknownFields(fields: Map<Int, UnknownField>) {
         fun writeUnknownFieldValue(fieldNum: Int, v: UnknownField.Value) {
