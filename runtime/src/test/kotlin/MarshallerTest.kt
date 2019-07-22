@@ -8,6 +8,7 @@ import jp.co.panpanini.Marshaller
 import jp.co.panpanini.Message
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
+import org.mockito.ArgumentMatchers.anyInt
 
 class MarshallerTest {
 
@@ -250,5 +251,46 @@ class MarshallerTest {
         target.writeMap(tag, map, createEntry)
 
         verify(target).writeMessage(entry)
+    }
+
+    @Test
+    fun `writePackedRepeated should call writeUInt32 with the sum of the sizes`() {
+        val input = listOf(1)
+        val sizeFunction: (Int) -> Int = { it }
+        val writeFunction: (Int) -> Unit = { }
+        target = spy(target)
+
+        target.writePackedRepeated(input, sizeFunction, writeFunction)
+
+        verify(target).writeUInt32(1)
+    }
+
+    @Test
+    fun `writePackedRepeated should call the size function for each item`() {
+        val input = listOf(1, 2, 3)
+        val sizeFunction: (Int) -> Int = mock {
+            whenever(mock.invoke(anyInt())).thenReturn(1)
+        }
+        val writeFunction: (Int) -> Unit = { }
+
+        target.writePackedRepeated(input, sizeFunction, writeFunction)
+
+        verify(sizeFunction).invoke(1)
+        verify(sizeFunction).invoke(2)
+        verify(sizeFunction).invoke(3)
+    }
+
+    @Test
+    fun `writePackedRepeated should call the write function for each item`() {
+        val input = listOf(1, 2, 3)
+        val sizeFunction: (Int) -> Int = { it }
+
+        val writeFunction: (Int) -> Unit = mock { }
+
+        target.writePackedRepeated(input, sizeFunction, writeFunction)
+
+        verify(writeFunction).invoke(1)
+        verify(writeFunction).invoke(2)
+        verify(writeFunction).invoke(3)
     }
 }

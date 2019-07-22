@@ -76,4 +76,9 @@ class Marshaller(private val stream: CodedOutputStream, private val bytes: ByteA
         }
     }
 
+    fun <T> writePackedRepeated(list: List<T>, sizeFunction: (T) -> Int, writeFunction: (T) -> Unit) {
+        writeUInt32(list.sumBy(sizeFunction))
+        list.forEach(writeFunction)
+    }
+
 }
