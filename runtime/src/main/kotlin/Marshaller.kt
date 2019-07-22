@@ -96,6 +96,10 @@ class Marshaller(private val stream: CodedOutputStream, private val bytes: ByteA
         value.protoMarshal(this)
     }
 
+    fun writeEnum(value: Message.Enum) {
+        writeInt32(value.value)
+    }
+
     fun complete() = bytes
 
     fun <K, V, T : Message<T>> writeMap(

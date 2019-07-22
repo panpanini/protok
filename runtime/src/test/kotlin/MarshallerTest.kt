@@ -293,4 +293,17 @@ class MarshallerTest {
         verify(writeFunction).invoke(2)
         verify(writeFunction).invoke(3)
     }
+
+    @Test
+    fun `writeEnum should call writeInt32`() {
+        val value = 1
+        val enum: Message.Enum = mock {
+            whenever(mock.value).thenReturn(value)
+        }
+        target = spy(target)
+
+        target.writeEnum(enum)
+
+        verify(target).writeInt32(value)
+    }
 }
