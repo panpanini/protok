@@ -155,7 +155,7 @@ data class Mappy(
 
         override fun protoUnmarshal(protoUnmarshal: Unmarshaller): Mappy {
             var id = ""
-            var things: Map<String, api.Thing>? = null
+            var things: Map<String, api.Thing> = emptyMap()
             while (true) {
                 when (protoUnmarshal.readTag()) {
                     0 -> return Mappy(id, HashMap(things), protoUnmarshal.unknownFields())
