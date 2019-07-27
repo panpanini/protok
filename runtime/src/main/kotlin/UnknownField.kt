@@ -1,7 +1,9 @@
 package jp.co.panpanini
 
+import java.io.Serializable
 
-class UnknownField(val fieldNum: Int, val value: Value) {
+
+class UnknownField(val fieldNum: Int, val value: Value) : Serializable {
     constructor(fieldNum: Int, value: Long, fixed: Boolean = false) :
             this(fieldNum, if (fixed) Value.Fixed64(value) else Value.Varint(value))
     constructor(fieldNum: Int, value: Int, fixed: Boolean = false) :
