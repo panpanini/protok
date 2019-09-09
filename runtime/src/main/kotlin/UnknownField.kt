@@ -24,7 +24,7 @@ data class UnknownField(val fieldNum: Int, val value: Value) : Serializable {
         }
     }
 
-    sealed class Value {
+    sealed class Value : Serializable {
         abstract fun size(): Int
 
         data class Varint(val varint: Long) : Value() {
