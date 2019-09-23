@@ -130,7 +130,7 @@ class Unmarshaller(private val stream: CodedInputStream, private val discardUnkn
             WireFormat.WIRETYPE_FIXED32 -> UnknownField.Value.Fixed32(stream.readFixed32())
             else -> error("Unrecognized wire type")
         }
-        unknownFields.compute(WireFormat.getTagFieldNumber(tag)) { fieldNum, prevVal ->
+        unknownFields.computeLocal(WireFormat.getTagFieldNumber(tag)) { fieldNum, prevVal ->
             UnknownField(fieldNum, prevVal?.value.let {
                 when (it) {
                     null -> value
@@ -143,4 +143,24 @@ class Unmarshaller(private val stream: CodedInputStream, private val discardUnkn
 
     fun unknownFields(): Map<Int, UnknownField> = currentUnknownFields ?: emptyMap()
 
+    private fun <K, V> MutableMap<K, V>.computeLocal(key: K, remappingFunction: (K, V?) -> V): V? {
+        val oldValue = get(key)
+
+        val newValue = remappingFunction(key, oldValue)
+        return if (newValue == null) {
+            // delete mapping
+            if (oldValue != null || containsKey(key)) {
+                // something to remove
+                remove(key)
+                null
+            } else {
+                // nothing to do. Leave things as they were.
+                null
+            }
+        } else {
+            // add or replace old mapping
+            put(key, newValue)
+            newValue
+        }
+    }
 }
