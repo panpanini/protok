@@ -102,14 +102,14 @@ class SizerTest {
 
     @Test
     fun `enumSize should call int32Size`() {
-        val input: Enum<*> = mock {
-            whenever(mock.ordinal).thenReturn(1)
+        val input: Message.Enum = mock {
+            whenever(mock.value).thenReturn(1)
         }
         target = spy(target)
 
         target.enumSize(input)
 
-        verify(target).int32Size(input.ordinal)
+        verify(target).int32Size(input.value)
     }
 
     @Test
