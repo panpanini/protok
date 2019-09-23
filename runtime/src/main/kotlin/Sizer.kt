@@ -21,8 +21,8 @@ object Sizer {
         }
     }
 
-    fun enumSize(value: Enum<*>): Int {
-        return int32Size(value.ordinal)
+    fun enumSize(value: Message.Enum): Int {
+        return int32Size(value.value)
     }
 
     fun messageSize(value: Message<*>) : Int {
