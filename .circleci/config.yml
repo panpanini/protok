@@ -65,6 +65,7 @@ jobs:
       - run:
           name: Put comments indicated by Danger
           command: |
+            gem install bundle
             bundle install --path vendor/bundle
             bundle exec danger --dangerfile=Dangerfile --danger_id="danger"
           when: always
