@@ -3,7 +3,7 @@ package jp.co.panpanini
 import com.google.protobuf.CodedInputStream
 import com.google.protobuf.WireFormat
 
-class Unmarshaller(private val stream: CodedInputStream, private val discardUnknownFields: Boolean = false) {
+actual class Unmarshaller(private val stream: CodedInputStream, private val discardUnknownFields: Boolean = false) {
     private var currentUnknownFields = if (discardUnknownFields) null else mutableMapOf<Int, UnknownField>()
 
     companion object {
@@ -13,43 +13,43 @@ class Unmarshaller(private val stream: CodedInputStream, private val discardUnkn
     }
 
 
-    fun readTag() = stream.readTag()
+    actual fun readTag() = stream.readTag()
 
-    fun readDouble() = stream.readDouble()
+    actual fun readDouble() = stream.readDouble()
 
-    fun readFloat() = stream.readFloat()
+    actual fun readFloat() = stream.readFloat()
 
-    fun readInt32() = stream.readInt32()
+    actual fun readInt32() = stream.readInt32()
 
-    fun readInt64() = stream.readInt64()
+    actual fun readInt64() = stream.readInt64()
 
-    fun readUInt32() = stream.readUInt32()
+    actual fun readUInt32() = stream.readUInt32()
 
-    fun readUInt64() = stream.readUInt64()
+    actual fun readUInt64() = stream.readUInt64()
 
-    fun readSInt32() = stream.readSInt32()
+    actual fun readSInt32() = stream.readSInt32()
 
-    fun readSInt64() = stream.readSInt64()
+    actual fun readSInt64() = stream.readSInt64()
 
-    fun readFixed32() = stream.readFixed32()
+    actual fun readFixed32() = stream.readFixed32()
 
-    fun readFixed64() = stream.readFixed64()
+    actual fun readFixed64() = stream.readFixed64()
 
-    fun readSFixed32() = stream.readSFixed32()
+    actual fun readSFixed32() = stream.readSFixed32()
 
-    fun readSFixed64() = stream.readSFixed64()
+    actual fun readSFixed64() = stream.readSFixed64()
 
-    fun readBool() = stream.readBool()
+    actual fun readBool() = stream.readBool()
 
-    fun readString() = stream.readString()
+    actual fun readString() = stream.readString()
 
-    fun readBytes() = ByteArr(stream.readByteArray())
+    actual fun readBytes() = ByteArr(stream.readByteArray())
 
-    fun <T: Message.Enum> readEnum(companion: Message.Enum.Companion<T>): T {
+    actual fun <T: Message.Enum> readEnum(companion: Message.Enum.Companion<T>): T {
         return companion.fromValue(stream.readEnum())
     }
 
-    fun <T: Message<T>> readMessage(companion: Message.Companion<T>): T {
+    actual fun <T: Message<T>> readMessage(companion: Message.Companion<T>): T {
         val previousLimit = stream.pushLimit(stream.readRawVarint32())
         val unknownFields = currentUnknownFields
         if (!discardUnknownFields) {
@@ -64,7 +64,7 @@ class Unmarshaller(private val stream: CodedInputStream, private val discardUnkn
         return message
     }
 
-    fun <T> readRepeated(appendTo: List<T>?, neverPacked: Boolean, readFunction: () -> T): List<T> {
+    actual fun <T> readRepeated(appendTo: List<T>?, neverPacked: Boolean, readFunction: () -> T): List<T> {
         val list = appendTo?.toMutableList() ?: mutableListOf()
         // If not length delimited, then we just have a single item
         if (neverPacked || WireFormat.getTagWireType(stream.lastTag) != WireFormat.WIRETYPE_LENGTH_DELIMITED) {
@@ -80,7 +80,7 @@ class Unmarshaller(private val stream: CodedInputStream, private val discardUnkn
         return list
     }
 
-    fun <T: Message.Enum> readRepeatedEnum(
+    actual fun <T: Message.Enum> readRepeatedEnum(
             appendTo: List<T>?,
             companion: Message.Enum.Companion<T>
     ): List<T> {
@@ -89,7 +89,7 @@ class Unmarshaller(private val stream: CodedInputStream, private val discardUnkn
         }
     }
 
-    fun <T: Message<T>> readRepeatedMessage(
+    actual fun <T: Message<T>> readRepeatedMessage(
             appendTo: List<T>?,
             companion: Message.Companion<T>,
             neverPacked: Boolean
@@ -99,7 +99,7 @@ class Unmarshaller(private val stream: CodedInputStream, private val discardUnkn
         }
     }
 
-    fun <K, V, T> readMap(appendTo: Map<K, V>?, companion: Message.Companion<T>, neverPacked: Boolean): Map<K, V> where T : Message<T>, T: Map.Entry<K, V> {
+    actual fun <K, V, T> readMap(appendTo: Map<K, V>?, companion: Message.Companion<T>, neverPacked: Boolean): Map<K, V> where T : Message<T>, T: Map.Entry<K, V> {
         val map = appendTo?.toMutableMap() ?: mutableMapOf()
         // If not length delimited, then we just have a single item
         if (neverPacked || WireFormat.getTagWireType(stream.lastTag) != WireFormat.WIRETYPE_LENGTH_DELIMITED) {
@@ -118,7 +118,7 @@ class Unmarshaller(private val stream: CodedInputStream, private val discardUnkn
         return map
     }
 
-    fun unknownField() {
+    actual fun unknownField() {
         val tag = stream.lastTag
         val unknownFields = currentUnknownFields ?: return run { stream.skipField(tag) }
         val value = when (WireFormat.getTagWireType(tag)) {
@@ -141,7 +141,7 @@ class Unmarshaller(private val stream: CodedInputStream, private val discardUnkn
         }
     }
 
-    fun unknownFields(): Map<Int, UnknownField> = currentUnknownFields ?: emptyMap()
+    actual fun unknownFields(): Map<Int, UnknownField> = currentUnknownFields ?: emptyMap()
 
     private fun <K, V> MutableMap<K, V>.computeLocal(key: K, remappingFunction: (K, V?) -> V): V? {
         val oldValue = get(key)

@@ -2,81 +2,81 @@ package jp.co.panpanini
 
 import com.google.protobuf.CodedOutputStream
 
-class Marshaller(private val stream: CodedOutputStream, private val bytes: ByteArray? = null) {
+actual class Marshaller(private val stream: CodedOutputStream, private val bytes: ByteArray? = null) {
 
     companion object {
         fun allocate(size: Int) = ByteArray(size).let { Marshaller(CodedOutputStream.newInstance(it), it) }
     }
 
-    fun writeTag(tag: Int) = this.apply { stream.writeInt32NoTag(tag) }
+    actual fun writeTag(tag: Int) = this.apply { stream.writeInt32NoTag(tag) }
 
-    fun writeTag(fieldNum: Int, wireType: Int) = this.apply { stream.writeInt32NoTag((fieldNum shl 3) or wireType) }
+    actual fun writeTag(fieldNum: Int, wireType: Int) = this.apply { stream.writeInt32NoTag((fieldNum shl 3) or wireType) }
 
-    fun writeDouble(value: Double) {
+    actual fun writeDouble(value: Double) {
         stream.writeDoubleNoTag(value)
     }
 
-    fun writeFloat(value: Float) {
+    actual fun writeFloat(value: Float) {
         stream.writeFloatNoTag(value)
     }
 
-    fun writeInt32(value: Int) {
+    actual fun writeInt32(value: Int) {
         stream.writeInt32NoTag(value)
     }
 
-    fun writeInt64(value: Long) {
+    actual fun writeInt64(value: Long) {
         stream.writeInt64NoTag(value)
     }
 
-    fun writeUInt32(value: Int) {
+    actual fun writeUInt32(value: Int) {
         stream.writeUInt32NoTag(value)
     }
 
-    fun writeUInt64(value: Long) {
+    actual fun writeUInt64(value: Long) {
         stream.writeUInt64NoTag(value)
     }
 
-    fun writeSInt32(value: Int) {
+    actual fun writeSInt32(value: Int) {
         stream.writeSInt32NoTag(value)
     }
 
-    fun writeSInt64(value: Long) {
+    actual fun writeSInt64(value: Long) {
         stream.writeSInt64NoTag(value)
     }
 
-    fun writeFixed32(value: Int) {
+    actual fun writeFixed32(value: Int) {
         stream.writeFixed32NoTag(value)
     }
 
-    fun writeFixed64(value: Long) {
+    actual fun writeFixed64(value: Long) {
         stream.writeFixed64NoTag(value)
     }
 
-    fun writeSFixed32(value: Int) {
+    actual fun writeSFixed32(value: Int) {
         stream.writeSFixed32NoTag(value)
     }
 
-    fun writeSFixed64(value: Long) {
+    actual fun writeSFixed64(value: Long) {
         stream.writeSFixed64NoTag(value)
     }
 
-    fun writeBool(value: Boolean) {
+    actual fun writeBool(value: Boolean) {
         stream.writeBoolNoTag(value)
     }
 
-    fun writeString(value: String) {
+    actual fun writeString(value: String) {
         stream.writeStringNoTag(value)
     }
 
-    fun writeBytes(value: ByteArr) {
-        writeBytes(value.array)
+    actual fun writeBytes(value: ByteArr) {
+        writeBytes(value.byteArray)
     }
 
-    fun writeBytes(value: ByteArray) {
+    actual fun writeBytes(value: ByteArray) {
         stream.writeByteArrayNoTag(value)
     }
 
-    fun writeUnknownFields(fields: Map<Int, UnknownField>) {
+    actual fun writeUnknownFields(fields: Map<Int, UnknownField>) {
         fun writeUnknownFieldValue(fieldNum: Int, v: UnknownField.Value) {
             when (v) {
                 is UnknownField.Value.Varint -> writeTag(fieldNum, 0).writeUInt64(v.varint)
@@ -91,28 +91,30 @@ class Marshaller(private val stream: CodedOutputStream, private val bytes: ByteA
         fields.forEach { writeUnknownFieldValue(it.key, it.value.value) }
     }
 
-    fun writeMessage(value: Message<*>) = this.apply {
+    actual fun writeMessage(value: Message<*>) = this.apply {
         writeUInt32(value.protoSize)
         value.protoMarshal(this)
     }
 
-    fun writeEnum(value: Message.Enum) {
+    actual fun writeEnum(value: Message.Enum) {
         writeInt32(value.value)
     }
 
-    fun complete() = bytes
+    actual fun complete() = bytes
 
-    fun <K, V, T : Message<T>> writeMap(
+    actual fun <K, V, T : Message<T>> writeMap(
             tag: Int,
             map: Map<K, V>,
             createEntry: (K, V) -> T
-    ) = this.apply {
+    ): Marshaller {
         map.entries.forEach {
-            writeTag(tag).writeMessage(it as? Message<*> ?: createEntry(it.key, it.value))
+            writeTag(tag as Int)
+            writeMessage(it as? Message<*> ?: createEntry(it.key, it.value))
         }
+        return this
     }
 
-    fun <T> writePackedRepeated(list: List<T>, sizeFunction: (T) -> Int, writeFunction: (T) -> Unit) {
+    actual fun <T> writePackedRepeated(list: List<T>, sizeFunction: (T) -> Int, writeFunction: (T) -> Unit) {
         writeUInt32(list.sumBy(sizeFunction))
         list.forEach(writeFunction)
     }

@@ -1,8 +1,5 @@
-apply plugin: 'kotlin'
-apply plugin: 'org.jetbrains.kotlin.jvm'
-apply plugin: 'guru.stefma.artifactorypublish'
-
-sourceCompatibility = 1.8
+apply plugin: 'org.jetbrains.kotlin.multiplatform'
+//apply plugin: 'guru.stefma.artifactorypublish'
 
 apply from: rootProject.file('version.gradle')
 
@@ -13,27 +10,60 @@ repositories {
 
 }
 
-dependencies {
-    compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
-    compile "com.google.protobuf:protobuf-java:3.6.1"
-    testCompile group: 'junit', name: 'junit', version: '4.12'
-    testCompile('com.nhaarman.mockitokotlin2:mockito-kotlin:2.1.0')
-    testCompile("org.assertj:assertj-core:3.11.1")
+kotlin {
+    jvm()
+    js()
+
+    sourceSets {
+        commonMain {
+            dependencies {
+                implementation kotlin('stdlib-common')
+            }
+        }
+        commonTest {
+            dependencies {
+                implementation kotlin('test-common')
+                implementation kotlin('test-annotations-common')
+                implementation "io.mockk:mockk-common:1.9.3"
+            }
+        }
+
+        jvmMain {
+            dependencies {
+                implementation kotlin('stdlib-jdk8')
+                implementation "com.google.protobuf:protobuf-java:3.6.1"
+            }
+        }
+        jvmTest {
+            dependencies {
+                implementation kotlin('test')
+                implementation kotlin('test-junit')
+                implementation('com.nhaarman.mockitokotlin2:mockito-kotlin:2.1.0')
+                implementation("org.assertj:assertj-core:3.11.1")
+            }
+        }
+
+        jsMain {
+            dependencies {
+                implementation kotlin('stdlib-js')
+                implementation "org.jetbrains.kotlinx:kotlinx-io-js:0.1.16"
+            }
+        }
+        jsTest {
+            dependencies {
+                implementation kotlin('test-js')
+                implementation "io.mockk:mockk-js:1.7.17"
+            }
+        }
+    }
 }
 
-compileKotlin {
-    kotlinOptions.jvmTarget = "1.8"
-}
-compileTestKotlin {
-    kotlinOptions.jvmTarget = "1.8"
-}
-
-artifactoryPublish {
-    groupId = 'jp.co.panpanini'
-    artifactId = 'protok-runtime'
-    publishVersion = versionName()
-    artifactoryUrl = artifactoryUrl
-    artifactoryRepo = artifactoryRepo
-    artifactoryUser = artifactoryUsername
-    artifactoryKey = artifactoryPassword
-}
+//artifactoryPublish {
+//    groupId = 'jp.co.panpanini'
+//    artifactId = 'protok-runtime'
+//    publishVersion = versionName()
+//    artifactoryUrl = artifactoryUrl
+//    artifactoryRepo = artifactoryRepo
+//    artifactoryUser = artifactoryUsername
+//    artifactoryKey = artifactoryPassword
+//}

@@ -170,7 +170,7 @@ class MarshallerTest {
     fun `writeBytes should call writeBytes with byte array`() {
         val input = ByteArray(0)
         val byteArr: ByteArr = mock {
-            whenever(mock.array).thenReturn(input)
+            whenever(mock.byteArray).thenReturn(input)
         }
         target = spy(target)
 
