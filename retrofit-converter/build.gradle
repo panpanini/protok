@@ -1,6 +1,7 @@
 apply plugin: 'kotlin'
 apply plugin: 'org.jetbrains.kotlin.jvm'
 apply plugin: 'guru.stefma.artifactorypublish'
+apply plugin: 'maven-publish'
 
 sourceCompatibility = 1.8
 
@@ -29,6 +30,26 @@ compileKotlin {
 }
 compileTestKotlin {
     kotlinOptions.jvmTarget = "1.8"
+}
+
+publishing {
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/panpanini/protok")
+            credentials {
+                username = project.findProperty("gpr.user") ?: System.getenv("github_user")
+                password = project.findProperty("gpr.key") ?: System.getenv("github_token")
+            }
+        }
+    }
+    publications {
+        gpr(MavenPublication) {
+            groupId = 'jp.co.panpanini'
+            artifactId = 'protok-retrofit-converter'
+            version = versionName()
+        }
+    }
 }
 
 artifactoryPublish {
