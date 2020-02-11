@@ -57,9 +57,12 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
         typeSpec.primaryConstructor(constructor.build())
         typeSpec.addFunction(createSecondaryConstructor(type))
 
+        typeSpec.addFunction(createToJsonFunction(type))
+
         mapEntry?.let {
             typeSpec.addSuperinterface(mapEntry)
         }
+
 
         type.nestedTypes.map {
             it.toTypeSpec(file, kotlinTypeMappings)
@@ -515,6 +518,71 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
         )
 
         return typeSpec.build()
+    }
+
+    private fun createToJsonFunction(type: File.Type.Message): FunSpec {
+        val builder = StringBuilder()
+                .append("return ")
+                .append("\"\"\"\n{ ")
+                .append(
+                        type.fields.joinToString(", ") { field ->
+                            "\n\"${field.name}\" : ${getJsonValue(field)}"
+                        }
+                )
+                .append("\n}\n\"\"\".trimIndent()")
+
+        return FunSpec.builder("toJson")
+                .addModifiers(KModifier.OVERRIDE)
+                .addCode(builder.toString())
+                .build()
+    }
+
+    private fun getJsonValue(field: File.Field): String {
+        return when (field) {
+            is File.Field.Standard -> {
+                when {
+                    field.map -> {
+                        getMapJsonValue(field)
+                    }
+                    field.repeated -> {
+                        getListJsonValue(field)
+                    }
+                    else -> {
+                        "\"\${${getStandardJsonValue(field, field.kotlinFieldName)}}\""
+
+                    }
+                }
+            }
+            is File.Field.OneOf -> {
+                TODO()
+            }
+        }
+    }
+
+    private fun getStandardJsonValue(field: File.Field.Standard, fieldName: String): String {
+        return when (field.type) {
+            File.Field.Type.BYTES -> TODO()
+            File.Field.Type.ENUM -> "$fieldName.toJson()"
+            File.Field.Type.MESSAGE -> "$fieldName.toJson()"
+            File.Field.Type.STRING -> field.kotlinFieldName
+            else -> "$fieldName.toString()"
+        }
+    }
+
+    private fun getMapJsonValue(field: File.Field.Standard): String {
+        return "TODO(\"implement map json\")"
+    }
+
+    private fun getListJsonValue(field: File.Field.Standard): String {
+        val builder = StringBuilder()
+        builder.append("[ ")
+        builder.append(
+                "\${ ${field.kotlinFieldName}.joinToString(\", \") { ${getStandardJsonValue(field, "it")} }"
+        )
+        builder.append(" }")
+
+        builder.append(" ]")
+        return builder.toString()
     }
 
     private fun File.Field.Standard.sizeExpression(): CodeBlock {
