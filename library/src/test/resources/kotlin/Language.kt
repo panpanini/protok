@@ -20,6 +20,15 @@ enum class Language(override val value: Int) : Serializable, Message.Enum {
     GO(4);
 
     override fun toString(): String = name
+    override fun toJson(): String = when(this) {
+        PROTOBUF -> "PROTOBUF"
+        KOTLIN -> "KOTLIN"
+        JAVA -> "JAVA"
+        SWIFT -> "SWIFT"
+        GO -> "GO"
+        else -> "PROTOBUF"
+    }
+
     companion object : Message.Enum.Companion<Language> {
         @JvmStatic
         override fun fromValue(value: Int): Language = when(value) {
