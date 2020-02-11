@@ -5,6 +5,8 @@ package api;
 message Mappy {
     string id = 1;
     map<string, Thing> things = 2;
+    map<string, int32> otherThings = 3;
+    repeated Thing thingList = 4;
 }
 
 message Thing {
