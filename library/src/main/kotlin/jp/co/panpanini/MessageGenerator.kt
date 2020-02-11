@@ -526,14 +526,14 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
                 .append("\"\"\"\n{ ")
                 .append(
                         type.fields.joinToString(", ") { field ->
-                            "\n\"${field.name}\" : ${getJsonValue(field)}"
+                            "\n\"${field.name}\"·:·${getJsonValue(field)}"
                         }
                 )
                 .append("\n}\n\"\"\".trimIndent()")
 
         return FunSpec.builder("toJson")
                 .addModifiers(KModifier.OVERRIDE)
-                .addCode(builder.toString())
+                .addCode(CodeBlock.of(builder.toString()))
                 .build()
     }
 
@@ -570,7 +570,18 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
     }
 
     private fun getMapJsonValue(field: File.Field.Standard): String {
-        return "TODO(\"implement map json\")"
+        // get the value type so we can call the correct function to get the correct json representation
+        val value = field.mapEntry()?.fields?.get(1) as? File.Field.Standard
+                ?: throw IllegalStateException("map value must not be null")
+
+        val builder = StringBuilder()
+                .append("{·")
+                .append("\${${field.kotlinFieldName}.entries.joinToString(\",·\")·{·(k,·v)·->\"\$k·:·\${${getStandardJsonValue(value, "v")}}\"·}·}")
+                .append("·}")
+
+        return builder.toString()
+
+
     }
 
     private fun getListJsonValue(field: File.Field.Standard): String {
