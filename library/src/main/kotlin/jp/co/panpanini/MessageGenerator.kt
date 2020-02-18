@@ -537,7 +537,7 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
                 .build()
     }
 
-    private fun getJsonValue(field: File.Field): String {
+    private fun getJsonValue(field: File.Field, prefix: String = ""): String {
         return when (field) {
             is File.Field.Standard -> {
                 when {
@@ -548,23 +548,41 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
                         getListJsonValue(field)
                     }
                     else -> {
-                        "\"\${${getStandardJsonValue(field, field.kotlinFieldName)}}\""
+                        "\"\${${getStandardJsonValue(field, "$prefix${field.kotlinFieldName}")}}\""
 
                     }
                 }
             }
             is File.Field.OneOf -> {
-                TODO()
+                val block = CodeBlock.builder()
+                block.add("\${ ")
+                block.beginControlFlow("when (${field.kotlinFieldName})")
+                field.fields.forEach {
+                    val code = CodeBlock.builder()
+                            .beginControlFlow("is ${field.kotlinTypeName}.${it.kotlinFieldName.beginWithUpperCase()} ->")
+                            .addStatement(
+                                   getJsonValue(it, "${field.kotlinFieldName}.")
+                            )
+                            .endControlFlow()
+                    block.add(code.build())
+                }
+                block.beginControlFlow("is ${field.kotlinTypeName}.NotSet ->")
+                        .addStatement("null")
+                        .endControlFlow()
+
+                block.endControlFlow()
+                block.addStatement("}")
+                block.build().toString()
             }
         }
     }
 
     private fun getStandardJsonValue(field: File.Field.Standard, fieldName: String): String {
         return when (field.type) {
-            File.Field.Type.BYTES -> TODO()
+            File.Field.Type.BYTES -> "$fieldName.base64Encode()"
             File.Field.Type.ENUM -> "$fieldName.toJson()"
             File.Field.Type.MESSAGE -> "$fieldName.toJson()"
-            File.Field.Type.STRING -> field.kotlinFieldName
+            File.Field.Type.STRING -> fieldName
             else -> "$fieldName.toString()"
         }
     }
