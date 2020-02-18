@@ -583,6 +583,7 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
             File.Field.Type.ENUM -> "$fieldName.toJson()"
             File.Field.Type.MESSAGE -> "$fieldName.toJson()"
             File.Field.Type.STRING -> fieldName
+            // TODO: INT64 -> return String value
             else -> "$fieldName.toString()"
         }
     }
