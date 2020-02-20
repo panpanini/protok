@@ -34,6 +34,7 @@ class EnumGenerator {
         typeSpec.addProperty(PropertySpec.builder("value", Int::class).initializer("value").build())
         typeSpec.addType(companion.build())
         typeSpec.addFunction(createToStringFunction())
+        typeSpec.addFunction(createToJsonFunction(type.values))
         return typeSpec.build()
     }
 
@@ -77,6 +78,21 @@ class EnumGenerator {
                 .addModifiers(KModifier.OVERRIDE)
                 .returns(String::class)
                 .addCode("return name")
+                .build()
+    }
+
+    private fun createToJsonFunction(values: List<File.Type.Enum.Value>): FunSpec {
+        val whenBlock = CodeBlock.builder()
+                .beginControlFlow("return when(this)")
+        values.forEach {
+            whenBlock.addStatement("%L -> %S", it.kotlinValueName, it.name)
+        }
+        whenBlock.addStatement("else -> %S", values.first().name)
+        whenBlock.endControlFlow()
+        return FunSpec.builder("toJson")
+                .addModifiers(KModifier.OVERRIDE)
+                .returns(String::class)
+                .addCode(whenBlock.build())
                 .build()
     }
 }

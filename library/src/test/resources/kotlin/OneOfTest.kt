@@ -26,6 +26,41 @@ data class OneOfTest(@JvmField val oneofField: OneofField = OneofField.NotSet, v
 
     constructor(oneofField: OneofField) : this(oneofField, emptyMap())
 
+    override fun toJson() = """
+    { 
+    "oneof_field" : ${ when (oneofField) {
+        is OneofField.OneofUint32 -> {
+            "${oneofField.oneofUint32.toString()}"
+        }
+        is OneofField.OneofString -> {
+            "${oneofField.oneofString}"
+        }
+        is OneofField.OneofBytes -> {
+            "${oneofField.oneofBytes.base64Encode()}"
+        }
+        is OneofField.OneofBool -> {
+            "${oneofField.oneofBool.toString()}"
+        }
+        is OneofField.OneofUint64 -> {
+            "${oneofField.oneofUint64.toString()}"
+        }
+        is OneofField.OneofFloat -> {
+            "${oneofField.oneofFloat.toString()}"
+        }
+        is OneofField.OneofDouble -> {
+            "${oneofField.oneofDouble.toString()}"
+        }
+        is OneofField.OneofItem -> {
+            "${oneofField.oneofItem.toJson()}"
+        }
+        is OneofField.NotSet -> {
+            null
+        }
+    }
+    }
+
+    }
+    """.trimIndent()
     fun OneOfTest.protoSizeImpl(): Int {
         var protoSize = 0
         if (oneofField !is OneofField.NotSet) {

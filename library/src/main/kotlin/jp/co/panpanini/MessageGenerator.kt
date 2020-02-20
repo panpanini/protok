@@ -57,9 +57,12 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
         typeSpec.primaryConstructor(constructor.build())
         typeSpec.addFunction(createSecondaryConstructor(type))
 
+        typeSpec.addFunction(createToJsonFunction(type))
+
         mapEntry?.let {
             typeSpec.addSuperinterface(mapEntry)
         }
+
 
         type.nestedTypes.map {
             it.toTypeSpec(file, kotlinTypeMappings)
@@ -515,6 +518,101 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
         )
 
         return typeSpec.build()
+    }
+
+    private fun createToJsonFunction(type: File.Type.Message): FunSpec {
+        val builder = StringBuilder()
+                .append("return ")
+                .append("\"\"\"\n{ ")
+                .append(
+                        type.fields.joinToString(", ") { field ->
+                            "\n\"${field.name}\"·:·${getJsonValue(field)}"
+                        }
+                )
+                .append("\n}\n\"\"\".trimIndent()")
+
+        return FunSpec.builder("toJson")
+                .addModifiers(KModifier.OVERRIDE)
+                .addCode(CodeBlock.of(builder.toString()))
+                .build()
+    }
+
+    private fun getJsonValue(field: File.Field, prefix: String = ""): String {
+        return when (field) {
+            is File.Field.Standard -> {
+                when {
+                    field.map -> {
+                        getMapJsonValue(field)
+                    }
+                    field.repeated -> {
+                        getListJsonValue(field)
+                    }
+                    else -> {
+                        "\"\${${getStandardJsonValue(field, "$prefix${field.kotlinFieldName}")}}\""
+
+                    }
+                }
+            }
+            is File.Field.OneOf -> {
+                val block = CodeBlock.builder()
+                block.add("\${ ")
+                block.beginControlFlow("when (${field.kotlinFieldName})")
+                field.fields.forEach {
+                    val code = CodeBlock.builder()
+                            .beginControlFlow("is ${field.kotlinTypeName}.${it.kotlinFieldName.beginWithUpperCase()} ->")
+                            .addStatement(
+                                   getJsonValue(it, "${field.kotlinFieldName}.")
+                            )
+                            .endControlFlow()
+                    block.add(code.build())
+                }
+                block.beginControlFlow("is ${field.kotlinTypeName}.NotSet ->")
+                        .addStatement("null")
+                        .endControlFlow()
+
+                block.endControlFlow()
+                block.addStatement("}")
+                block.build().toString()
+            }
+        }
+    }
+
+    private fun getStandardJsonValue(field: File.Field.Standard, fieldName: String): String {
+        return when (field.type) {
+            File.Field.Type.BYTES -> "$fieldName.base64Encode()"
+            File.Field.Type.ENUM -> "$fieldName.toJson()"
+            File.Field.Type.MESSAGE -> "$fieldName.toJson()"
+            File.Field.Type.STRING -> fieldName
+            // TODO: INT64 -> return String value
+            else -> "$fieldName.toString()"
+        }
+    }
+
+    private fun getMapJsonValue(field: File.Field.Standard): String {
+        // get the value type so we can call the correct function to get the correct json representation
+        val value = field.mapEntry()?.fields?.get(1) as? File.Field.Standard
+                ?: throw IllegalStateException("map value must not be null")
+
+        val builder = StringBuilder()
+                .append("{·")
+                .append("\${${field.kotlinFieldName}.entries.joinToString(\",·\")·{·(k,·v)·->\"\$k·:·\${${getStandardJsonValue(value, "v")}}\"·}·}")
+                .append("·}")
+
+        return builder.toString()
+
+
+    }
+
+    private fun getListJsonValue(field: File.Field.Standard): String {
+        val builder = StringBuilder()
+        builder.append("[ ")
+        builder.append(
+                "\${ ${field.kotlinFieldName}.joinToString(\", \") { ${getStandardJsonValue(field, "it")} }"
+        )
+        builder.append(" }")
+
+        builder.append(" ]")
+        return builder.toString()
     }
 
     private fun File.Field.Standard.sizeExpression(): CodeBlock {

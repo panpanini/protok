@@ -21,6 +21,11 @@ data class Item(@JvmField val id: String = "", val unknownFields: Map<Int, Unkno
 
     constructor(id: String) : this(id, emptyMap())
 
+    override fun toJson() = """
+    { 
+    "id" : "${id}"
+    }
+    """.trimIndent()
     fun Item.protoSizeImpl(): Int {
         var protoSize = 0
         if (id != DEFAULT_ID) {

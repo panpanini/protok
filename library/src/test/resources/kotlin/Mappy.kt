@@ -10,6 +10,7 @@ import jp.co.panpanini.Unmarshaller
 import kotlin.ByteArray
 import kotlin.Int
 import kotlin.String
+import kotlin.collections.List
 import kotlin.collections.Map
 import kotlin.jvm.JvmField
 import kotlin.jvm.JvmStatic
@@ -17,13 +18,29 @@ import kotlin.jvm.JvmStatic
 data class Mappy(
     @JvmField val id: String = "",
     @JvmField val things: Map<String, api.Thing> = emptyMap(),
+    @JvmField val otherThings: Map<String, Int> = emptyMap(),
+    @JvmField val thingList: List<api.Thing> = emptyList(),
     val unknownFields: Map<Int, UnknownField> = emptyMap()
 ) : Message<Mappy>, Serializable {
     override val protoSize: Int = protoSizeImpl()
 
 
-    constructor(id: String, things: Map<String, api.Thing>) : this(id, things, emptyMap())
+    constructor(
+        id: String,
+        things: Map<String, api.Thing>,
+        otherThings: Map<String, Int>,
+        thingList: List<api.Thing>
+    ) : this(id, things, otherThings, thingList, emptyMap())
 
+    override fun toJson() = """
+    { 
+    "id" : "${id}", 
+    "things" : { ${things.entries.joinToString(", ") { (k, v) ->"$k : ${v.toJson()}" } } }, 
+    "otherThings" : { ${otherThings.entries.joinToString(", ") { (k, v) ->"$k : ${v.toString()}" } } },
+            
+    "thingList" : [ ${ thingList.joinToString(", ") { it.toJson() } } ]
+    }
+    """.trimIndent()
     fun Mappy.protoSizeImpl(): Int {
         var protoSize = 0
         if (id != DEFAULT_ID) {
@@ -31,6 +48,13 @@ data class Mappy(
         }
         if (things.isNotEmpty()) {
             protoSize += jp.co.panpanini.Sizer.mapSize(2, things, api.Mappy::ThingsEntry)
+        }
+        if (otherThings.isNotEmpty()) {
+            protoSize += jp.co.panpanini.Sizer.mapSize(3, otherThings, api.Mappy::OtherThingsEntry)
+        }
+        if (thingList.isNotEmpty()) {
+            protoSize += jp.co.panpanini.Sizer.tagSize(4) * thingList.size +
+                    thingList.sumBy(jp.co.panpanini.Sizer::messageSize)
         }
         protoSize += unknownFields.entries.sumBy { it.value.size() }
         return protoSize
@@ -45,6 +69,14 @@ data class Mappy(
             protoMarshal.writeMap(18, things, api.Mappy::ThingsEntry)
 
         }
+        if (otherThings.isNotEmpty()) {
+            protoMarshal.writeMap(26, otherThings, api.Mappy::OtherThingsEntry)
+
+        }
+        if (thingList.isNotEmpty()) {
+            thingList.forEach { protoMarshal.writeTag(34).writeMessage(it) }
+
+        }
         if (unknownFields.isNotEmpty()) {
             protoMarshal.writeUnknownFields(unknownFields)
         }
@@ -52,6 +84,8 @@ data class Mappy(
 
     fun Mappy.protoMergeImpl(other: Mappy?): Mappy = other?.copy(
         things = things + other.things,
+        otherThings = otherThings + other.otherThings,
+        thingList = thingList + other.thingList,
         unknownFields = unknownFields + other.unknownFields
     ) ?: this
 
@@ -67,6 +101,8 @@ data class Mappy(
     fun newBuilder(): Builder = Builder()
         .id(id)
         .things(things)
+        .otherThings(otherThings)
+        .thingList(thingList)
         .unknownFields(unknownFields)
 
     data class ThingsEntry(
@@ -79,6 +115,12 @@ data class Mappy(
 
         constructor(key: String, value: api.Thing) : this(key, value, emptyMap())
 
+        override fun toJson() = """
+        { 
+        "key" : "${key}", 
+        "value" : "${value.toJson()}"
+        }
+        """.trimIndent()
         fun ThingsEntry.protoSizeImpl(): Int {
             var protoSize = 0
             if (key != DEFAULT_KEY) {
@@ -146,6 +188,90 @@ data class Mappy(
         }
     }
 
+    data class OtherThingsEntry(
+        override val key: String,
+        override val value: Int,
+        val unknownFields: Map<Int, UnknownField> = emptyMap()
+    ) : Message<OtherThingsEntry>, Serializable, Map.Entry<String, Int> {
+        override val protoSize: Int = protoSizeImpl()
+
+
+        constructor(key: String, value: Int) : this(key, value, emptyMap())
+
+        override fun toJson() = """
+        { 
+        "key" : "${key}", 
+        "value" : "${value.toString()}"
+        }
+        """.trimIndent()
+        fun OtherThingsEntry.protoSizeImpl(): Int {
+            var protoSize = 0
+            if (key != DEFAULT_KEY) {
+                protoSize += jp.co.panpanini.Sizer.tagSize(1) +
+                        jp.co.panpanini.Sizer.stringSize(key)
+            }
+            if (value != DEFAULT_VALUE) {
+                protoSize += jp.co.panpanini.Sizer.tagSize(2) +
+                        jp.co.panpanini.Sizer.int32Size(value)
+            }
+            protoSize += unknownFields.entries.sumBy { it.value.size() }
+            return protoSize
+        }
+
+        fun OtherThingsEntry.protoMarshalImpl(protoMarshal: Marshaller) {
+            if (key != DEFAULT_KEY) {
+                protoMarshal.writeTag(10).writeString(key)
+
+            }
+            if (value != DEFAULT_VALUE) {
+                protoMarshal.writeTag(16).writeInt32(value)
+
+            }
+            if (unknownFields.isNotEmpty()) {
+                protoMarshal.writeUnknownFields(unknownFields)
+            }
+        }
+
+        fun OtherThingsEntry.protoMergeImpl(other: OtherThingsEntry?): OtherThingsEntry =
+                other?.copy(
+            unknownFields = unknownFields + other.unknownFields
+        ) ?: this
+
+        override fun protoMarshal(marshaller: Marshaller) = protoMarshalImpl(marshaller)
+
+        override operator fun plus(other: OtherThingsEntry?): OtherThingsEntry =
+                protoMergeImpl(other)
+
+        fun encode(): ByteArray = protoMarshal()
+
+        override fun protoUnmarshal(protoUnmarshal: Unmarshaller): OtherThingsEntry =
+                Companion.protoUnmarshal(protoUnmarshal)
+
+        companion object : Message.Companion<OtherThingsEntry> {
+            @JvmField
+            val DEFAULT_KEY: String = ""
+
+            @JvmField
+            val DEFAULT_VALUE: Int = 0
+
+            override fun protoUnmarshal(protoUnmarshal: Unmarshaller): OtherThingsEntry {
+                var key = ""
+                var value = 0
+                while (true) {
+                    when (protoUnmarshal.readTag()) {
+                        0 -> return OtherThingsEntry(key, value, protoUnmarshal.unknownFields())
+                        10 -> key = protoUnmarshal.readString()
+                        16 -> value = protoUnmarshal.readInt32()
+                        else -> protoUnmarshal.unknownField()
+                    }
+                }
+            }
+
+            @JvmStatic
+            fun decode(arr: ByteArray): OtherThingsEntry = protoUnmarshal(arr)
+        }
+    }
+
     companion object : Message.Companion<Mappy> {
         @JvmField
         val DEFAULT_ID: String = ""
@@ -153,15 +279,28 @@ data class Mappy(
         @JvmField
         val DEFAULT_THINGS: Map<String, api.Thing> = emptyMap()
 
+        @JvmField
+        val DEFAULT_OTHER_THINGS: Map<String, Int> = emptyMap()
+
+        @JvmField
+        val DEFAULT_THING_LIST: List<api.Thing> = emptyList()
+
         override fun protoUnmarshal(protoUnmarshal: Unmarshaller): Mappy {
             var id = ""
             var things: Map<String, api.Thing> = emptyMap()
+            var otherThings: Map<String, Int> = emptyMap()
+            var thingList: List<api.Thing> = emptyList()
             while (true) {
                 when (protoUnmarshal.readTag()) {
-                    0 -> return Mappy(id, HashMap(things), protoUnmarshal.unknownFields())
+                    0 -> return Mappy(id, HashMap(things), HashMap(otherThings),
+                            thingList, protoUnmarshal.unknownFields())
                     10 -> id = protoUnmarshal.readString()
                     18 -> things = protoUnmarshal.readMap(things, api.Mappy.ThingsEntry.Companion,
                             true)
+                    26 -> otherThings = protoUnmarshal.readMap(otherThings,
+                            api.Mappy.OtherThingsEntry.Companion, true)
+                    34 -> thingList = protoUnmarshal.readRepeatedMessage(thingList,
+                            api.Thing.Companion, true)
                     else -> protoUnmarshal.unknownField()
                 }
             }
@@ -176,6 +315,10 @@ data class Mappy(
 
         var things: Map<String, api.Thing> = DEFAULT_THINGS
 
+        var otherThings: Map<String, Int> = DEFAULT_OTHER_THINGS
+
+        var thingList: List<api.Thing> = DEFAULT_THING_LIST
+
         var unknownFields: Map<Int, UnknownField> = emptyMap()
 
         fun id(id: String?): Builder {
@@ -188,11 +331,21 @@ data class Mappy(
             return this
         }
 
+        fun otherThings(otherThings: Map<String, Int>?): Builder {
+            this.otherThings = otherThings ?: DEFAULT_OTHER_THINGS
+            return this
+        }
+
+        fun thingList(thingList: List<api.Thing>?): Builder {
+            this.thingList = thingList ?: DEFAULT_THING_LIST
+            return this
+        }
+
         fun unknownFields(unknownFields: Map<Int, UnknownField>): Builder {
             this.unknownFields = unknownFields
             return this
         }
 
-        fun build(): Mappy = Mappy(id, things, unknownFields)
+        fun build(): Mappy = Mappy(id, things, otherThings, thingList, unknownFields)
     }
 }
