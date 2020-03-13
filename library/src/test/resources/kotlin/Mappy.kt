@@ -19,8 +19,8 @@ data class Mappy(
     @JvmField val things: Map<String, api.Thing> = emptyMap(),
     val unknownFields: Map<Int, UnknownField> = emptyMap()
 ) : Message<Mappy>, Serializable {
-    override val protoSize: Int = protoSizeImpl()
-
+    override val protoSize: Int
+        get() = protoSizeImpl()
 
     constructor(id: String, things: Map<String, api.Thing>) : this(id, things, emptyMap())
 
@@ -74,8 +74,8 @@ data class Mappy(
         override val value: api.Thing,
         val unknownFields: Map<Int, UnknownField> = emptyMap()
     ) : Message<ThingsEntry>, Serializable, Map.Entry<String, api.Thing> {
-        override val protoSize: Int = protoSizeImpl()
-
+        override val protoSize: Int
+            get() = protoSizeImpl()
 
         constructor(key: String, value: api.Thing) : this(key, value, emptyMap())
 

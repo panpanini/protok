@@ -21,8 +21,8 @@ import kotlin.jvm.JvmStatic
 
 data class OneOfTest(@JvmField val oneofField: OneofField = OneofField.NotSet, val unknownFields:
         Map<Int, UnknownField> = emptyMap()) : Message<OneOfTest>, Serializable {
-    override val protoSize: Int = protoSizeImpl()
-
+    override val protoSize: Int
+        get() = protoSizeImpl()
 
     constructor(oneofField: OneofField) : this(oneofField, emptyMap())
 
