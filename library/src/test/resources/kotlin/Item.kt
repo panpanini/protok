@@ -16,8 +16,8 @@ import kotlin.jvm.JvmStatic
 
 data class Item(@JvmField val id: String = "", val unknownFields: Map<Int, UnknownField> =
         emptyMap()) : Message<Item>, Serializable {
-    override val protoSize: Int = protoSizeImpl()
-
+    override val protoSize: Int
+        get() = protoSizeImpl()
 
     constructor(id: String) : this(id, emptyMap())
 
