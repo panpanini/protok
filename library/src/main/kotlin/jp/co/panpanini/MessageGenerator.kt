@@ -112,10 +112,15 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
     private fun createProtoSizeVal(): PropertySpec {
         return PropertySpec.builder("protoSize", Int::class)
                 .addModifiers(KModifier.OVERRIDE)
-                .initializer(CodeBlock.builder()
-                        .addStatement("protoSizeImpl()")
-                        .build()
-                ).build()
+                .getter(
+                        FunSpec.getterBuilder().addCode(
+                                CodeBlock.builder()
+                                        .addStatement("return protoSizeImpl()")
+                                        .build()
+                        )
+                                .build()
+                )
+                .build()
     }
 
     private fun createProtoMarshalFunction(): FunSpec {
