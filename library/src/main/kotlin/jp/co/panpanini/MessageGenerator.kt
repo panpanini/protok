@@ -77,6 +77,7 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
         typeSpec.addProperty(createProtoSizeVal())
         typeSpec.addFunction(createProtoMarshalFunction())
         typeSpec.addFunction(createPlusOperator(className))
+        typeSpec.addFunction(createCopyFunction(className))
         typeSpec.addType(companionGenerator.buildCompanion(type, className))
         typeSpec.addFunction(createEncodeFunction())
         typeSpec.addFunction(createProtoUnmarshalFunction(className))
@@ -260,6 +261,24 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
     }
 
     private val File.Field.OneOf.defaultValue get() = "$kotlinTypeName.NotSet"
+
+    private fun createCopyFunction(typeName: ClassName): FunSpec {
+        val builderParameter = ParameterSpec.builder("block", LambdaTypeName.get(ClassName("", "Builder"), returnType =  Unit::class.asTypeName()))
+
+        val code = CodeBlock.Builder()
+                .add("return newBuilder()")
+                .beginControlFlow(".apply")
+                .addStatement("block(this)")
+                .endControlFlow()
+                .add(".build()\n")
+                .build()
+
+        return FunSpec.builder("copy")
+                .returns(typeName)
+                .addParameter(builderParameter.build())
+                .addCode(code)
+                .build()
+    }
 
     private fun createMessageMergeExtension(type: File.Type.Message, typeName: ClassName): FunSpec {
         val codeBlock = CodeBlock.builder()
