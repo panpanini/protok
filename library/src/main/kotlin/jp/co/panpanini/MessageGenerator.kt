@@ -77,6 +77,7 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
         typeSpec.addFunction(createPlusOperator(className))
         typeSpec.addFunction(createCopyFunction(className))
         typeSpec.addFunction(createEqualsFunction(type, className))
+        typeSpec.addFunction(createHashCodeFunction(type))
         typeSpec.addType(companionGenerator.buildCompanion(type, className))
         typeSpec.addFunction(createEncodeFunction())
         typeSpec.addFunction(createProtoUnmarshalFunction(className))
@@ -299,6 +300,26 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
                             .build()
             )
             .build()
+
+    private fun createHashCodeFunction(type: File.Type.Message): FunSpec {
+        return FunSpec.builder("hashCode")
+                .returns(Int::class)
+                .addModifiers(KModifier.OVERRIDE)
+                .addCode(
+                        CodeBlock.builder()
+                                .addStatement("var result = ${type.fields.first().kotlinFieldName}.hashCode()")
+                                .apply {
+                                    type.fields.takeLast(type.fields.size-1).map {
+                                        "result = 31 * result + ${it.kotlinFieldName}.hashCode()"
+                                    }
+                                    .forEach { addStatement(it) }
+                                }
+                                .addStatement("result = 31 * result + unknownFields.hashCode()")
+                                .addStatement("return result")
+                                .build()
+                )
+                .build()
+    }
 
     private fun createMessageMergeExtension(type: File.Type.Message, typeName: ClassName): FunSpec {
         val codeBlock = CodeBlock.builder()
