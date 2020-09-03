@@ -96,6 +96,8 @@ class Item() : Message<Item>, Serializable {
 
         @JvmStatic
         fun decode(arr: ByteArray): Item = protoUnmarshal(arr)
+
+        fun with(block: Builder.() -> Unit) = Item().copy(block)
     }
 
     class Builder {

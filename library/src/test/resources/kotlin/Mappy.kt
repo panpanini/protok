@@ -199,6 +199,8 @@ class Mappy() : Message<Mappy>, Serializable {
 
             @JvmStatic
             fun decode(arr: ByteArray): ThingsEntry = protoUnmarshal(arr)
+
+            fun with(block: Builder.() -> Unit) = ThingsEntry().copy(block)
         }
 
         class Builder {
@@ -259,6 +261,8 @@ class Mappy() : Message<Mappy>, Serializable {
 
         @JvmStatic
         fun decode(arr: ByteArray): Mappy = protoUnmarshal(arr)
+
+        fun with(block: Builder.() -> Unit) = Mappy().copy(block)
     }
 
     class Builder {

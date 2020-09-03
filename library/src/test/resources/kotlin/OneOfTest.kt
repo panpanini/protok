@@ -186,6 +186,8 @@ class OneOfTest() : Message<OneOfTest>, Serializable {
 
         @JvmStatic
         fun decode(arr: ByteArray): OneOfTest = protoUnmarshal(arr)
+
+        fun with(block: Builder.() -> Unit) = OneOfTest().copy(block)
     }
 
     class Builder {
