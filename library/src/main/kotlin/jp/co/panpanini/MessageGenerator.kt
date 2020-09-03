@@ -415,25 +415,35 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
 
         // write all non-default fields
         val codeBlock = CodeBlock.builder()
-        type.sortedStandardFieldsWithOneOfs()
-                .map { (field, oneOf) ->
-                    if (oneOf == null) {
-                        // standard field
-                        CodeBlock.builder()
-                                .beginControlFlow("if (${field.getNonDefaultCheck()})")
-                                .addStatement(field.writeExpressionToMarshaller(marshalParameter.name))
-                                .endControlFlow()
-                                .build()
-                    } else {
+        type.standardFields()
+                .map { field ->
+                    // standard field
+                    CodeBlock.builder()
+                            .beginControlFlow("if (${field.getNonDefaultCheck()})")
+                            .addStatement(field.writeExpressionToMarshaller(marshalParameter.name))
+                            .endControlFlow()
+                            .build()
+                }
+                .forEach { codeBlock.add(it) }
+
+        type.oneOfFields()
+                .map { oneOf ->
+                    val builder = CodeBlock.builder()
+                            .beginControlFlow("${oneOf.kotlinFieldName}.run")
+
+                    oneOf.fields.map { field ->
                         val subclassName = "${typeName.canonicalName}.${oneOf.kotlinTypeName}.${oneOf.kotlinFieldTypeNames[field.name]}"
 
                         CodeBlock.builder()
-                                .beginControlFlow("if (${oneOf.kotlinFieldName} is $subclassName)")
-                                .addStatement(field.writeExpressionToMarshaller(marshalParameter.name, "${oneOf.kotlinFieldName}.${field.kotlinFieldName}"))
+                                .beginControlFlow("if (this is $subclassName)")
+                                .add(field.writeExpressionToMarshaller(marshalParameter.name, field.kotlinFieldName))
                                 .endControlFlow()
                                 .build()
+                    }.forEach { builder.add(it) }
 
-                    }
+                    builder
+                            .endControlFlow()
+                            .build()
                 }
                 .forEach { codeBlock.add(it) }
         // unknownFields
@@ -465,13 +475,21 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
         return codeBlock.build().toString()
     }
 
-    private fun File.Type.Message.sortedStandardFieldsWithOneOfs() =
-            fields.flatMap {
+    private fun File.Type.Message.standardFields() =
+            fields.mapNotNull {
                 when (it) {
-                    is File.Field.Standard -> listOf(it to null)
-                    is File.Field.OneOf -> it.fields.map { f -> f to it }
+                    is File.Field.Standard -> it
+                    is File.Field.OneOf -> null
                 }
-            }.sortedBy { (field, _) ->  field.number }
+            }.sortedBy(File.Field.Standard::number)
+
+    private fun File.Type.Message.oneOfFields() =
+            fields.mapNotNull {
+                when (it) {
+                    is File.Field.Standard -> null
+                    is File.Field.OneOf -> it
+                }
+            }
 
     private fun createMessageSizeExtension(type: File.Type.Message, typeName: ClassName): FunSpec {
         val funSpec = FunSpec.builder("protoSizeImpl")
