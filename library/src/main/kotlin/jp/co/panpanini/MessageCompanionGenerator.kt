@@ -49,7 +49,7 @@ class MessageCompanionGenerator(private val file: File, private val kotlinTypeMa
         //TODO: clean this up - its a little difficult to follow. maybe create a function for it
         codeBlock.beginControlFlow("while (true)")
         codeBlock.beginControlFlow("when (${unMarshalParameter.name}.readTag())")
-                .addStatement("0 ->·return·${typeName.simpleName}(${doneKotlinFields.map { "$it" }.joinToString()}${if(doneKotlinFields.isNotEmpty()) ",·" else ""}${unMarshalParameter.name}.unknownFields())")
+                .addStatement("0 ->·return·${createBuilderInitFunction(type.fields, doneKotlinFields)}")
         type.sortedStandardFieldsWithOneOfs().map { (field, oneOf) ->
             val tags = mutableListOf(field.tag)
             val fieldBlock = CodeBlock.builder()
@@ -81,6 +81,22 @@ class MessageCompanionGenerator(private val file: File, private val kotlinTypeMa
 
         funSpec.addCode(codeBlock.build())
         return funSpec.build()
+    }
+
+    private fun createBuilderInitFunction(fields: List<File.Field>, doneValue: List<String>): CodeBlock {
+        return CodeBlock.builder()
+                .add("Builder()\n")
+                .apply {
+                    fields.mapIndexed { index, field ->
+                        ".${field.kotlinFieldName}(${doneValue[index]})"
+                    }
+                            .forEach {
+                                addStatement(it)
+                            }
+                }
+                .addStatement(".unknownFields(protoUnmarshal.unknownFields())")
+                .addStatement(".build()")
+                .build()
     }
 
     private fun createDecodeFunction(typeName: ClassName): FunSpec {
