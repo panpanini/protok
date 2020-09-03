@@ -584,12 +584,15 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
     }
 
     private fun File.Field.Standard.mapConstructorReference(): CodeBlock {
-        return CodeBlock.of(
-                kotlinQualifiedTypeName.let {
-                    val type = it.toString()
-                    type.lastIndexOf('.').let { if (it == -1) "::$type" else type.substring(0, it) + "::" + type.substring(it + 1) }
-                }
-        )
+        return CodeBlock.builder()
+                .addStatement("{ key, value ->")
+                .beginControlFlow("${kotlinQualifiedTypeName}.Builder().apply")
+                .addStatement("key(key)")
+                .addStatement("value(value)")
+                .endControlFlow()
+                .addStatement(".build()")
+                .add("}\n")
+                .build()
     }
 
     private fun File.Field.Standard.getNonDefaultCheck(): CodeBlock {
