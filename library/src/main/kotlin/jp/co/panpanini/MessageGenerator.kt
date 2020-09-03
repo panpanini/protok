@@ -81,10 +81,8 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
         typeSpec.addType(companionGenerator.buildCompanion(type, className))
         typeSpec.addFunction(createEncodeFunction())
         typeSpec.addFunction(createProtoUnmarshalFunction(className))
-        if (!type.mapEntry) {
-            typeSpec.addFunction(createNewBuilder(type, className))
-            typeSpec.addType(createBuilder(type, className))
-        }
+        typeSpec.addFunction(createNewBuilder(type, className))
+        typeSpec.addType(createBuilder(type, className))
         return typeSpec.build()
     }
 
