@@ -76,6 +76,7 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
         typeSpec.addFunction(createProtoMarshalFunction())
         typeSpec.addFunction(createPlusOperator(className))
         typeSpec.addFunction(createCopyFunction(className))
+        typeSpec.addFunction(createEqualsFunction(type, className))
         typeSpec.addType(companionGenerator.buildCompanion(type, className))
         typeSpec.addFunction(createEncodeFunction())
         typeSpec.addFunction(createProtoUnmarshalFunction(className))
@@ -279,6 +280,25 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
                 .addCode(code)
                 .build()
     }
+
+    private fun createEqualsFunction(type: File.Type.Message, typeName: ClassName) = FunSpec.builder("equals")
+            .returns(Boolean::class)
+            .addModifiers(KModifier.OVERRIDE)
+            .addParameter(ParameterSpec.builder("other", Any::class.asTypeName().copy(nullable = true))
+                    .build())
+            .addCode(
+                    CodeBlock.Builder()
+                            .add("return ")
+                            .addStatement("other is %T &&", typeName)
+                            .add(
+                                    type.fields.map {
+                                        CodeBlock.of("${it.kotlinFieldName} == other.${it.kotlinFieldName}")
+                                    }.joinToString(separator = " &&\n")
+                            )
+                            .add("\n")
+                            .build()
+            )
+            .build()
 
     private fun createMessageMergeExtension(type: File.Type.Message, typeName: ClassName): FunSpec {
         val codeBlock = CodeBlock.builder()
