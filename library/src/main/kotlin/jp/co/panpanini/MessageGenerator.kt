@@ -450,7 +450,7 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
         val codeBlock = CodeBlock.builder()
         when {
             map -> {
-                codeBlock.addStatement("$marshaller.writeMap($tag, $reference, ${mapConstructorReference()})")
+                codeBlock.add("$marshaller.writeMap($tag, $reference) ${mapConstructorReference()}")
             }
             repeated && packed -> {
                 codeBlock.addStatement("$marshaller.writeTag($tag).writePackedRepeated($reference, %T::${type.sizeMethod}, $marshaller::${type.writeMethod})", Sizer::class)
@@ -564,7 +564,7 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
 
         when {
             map -> {
-                codeBlock.add("%T.mapSize($number, $kotlinFieldName, ${mapConstructorReference()})", sizer)
+                codeBlock.add("%T.mapSize($number, $kotlinFieldName) ${mapConstructorReference()}", sizer)
             }
             repeated && packed -> {
                 codeBlock.add("%T.tagSize($number) + %T.packedRepeatedSize($kotlinFieldName, %T::${type.sizeMethod})", sizer, sizer, sizer)
@@ -589,7 +589,7 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
                 .addStatement("value(value)")
                 .endControlFlow()
                 .addStatement(".build()")
-                .add("}\n")
+                .add("}")
                 .build()
     }
 
