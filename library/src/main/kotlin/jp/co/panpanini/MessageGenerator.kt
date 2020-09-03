@@ -51,7 +51,7 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
        val unknownPropertySpec = unknownFieldSpec()
         typeSpec.addProperty(unknownPropertySpec)
 
-        typeSpec.primaryConstructor(FunSpec.constructorBuilder().addModifiers(KModifier.PRIVATE).build())
+        typeSpec.primaryConstructor(FunSpec.constructorBuilder().build())
 
         mapEntry?.let {
             typeSpec.addSuperinterface(mapEntry)
