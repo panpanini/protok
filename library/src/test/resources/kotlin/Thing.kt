@@ -2,11 +2,20 @@
 // Source file: map.proto
 package api
 
+import java.io.Serializable
 import jp.co.panpanini.Marshaller
 import jp.co.panpanini.Message
 import jp.co.panpanini.UnknownField
 import jp.co.panpanini.Unmarshaller
-import java.io.Serializable
+import kotlin.Any
+import kotlin.Boolean
+import kotlin.ByteArray
+import kotlin.Int
+import kotlin.String
+import kotlin.Unit
+import kotlin.collections.Map
+import kotlin.jvm.JvmField
+import kotlin.jvm.JvmStatic
 
 class Thing() : Message<Thing>, Serializable {
     var id: String = ""
