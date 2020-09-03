@@ -24,7 +24,6 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
         val typeSpec = TypeSpec.classBuilder(type.kotlinTypeName)
                 .addSuperinterface(superInterface)
                 .addSuperinterface(Serializable::class)
-                .addModifiers(KModifier.DATA)
 
         val constructor = FunSpec.constructorBuilder()
 
