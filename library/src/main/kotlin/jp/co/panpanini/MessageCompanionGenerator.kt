@@ -12,6 +12,7 @@ class MessageCompanionGenerator(private val file: File, private val kotlinTypeMa
                 .addSuperinterface(Message.Companion::class.asClassName().parameterizedBy(typeName))
                 .addFunction(createCompanionProtoUnmarshalFunction(type, typeName))
                 .addFunction(createDecodeFunction(typeName))
+                .addFunction(createWithFunction(typeName))
 
         createDefaultConstants(type)
                 .forEach { companion.addProperty(it) }
@@ -105,6 +106,28 @@ class MessageCompanionGenerator(private val file: File, private val kotlinTypeMa
                 .addParameter("arr", ByteArray::class)
                 .addAnnotation(JvmStatic::class)
                 .addCode("return protoUnmarshal(arr)\n")
+                .build()
+    }
+
+    /**
+     * fun with(block: Builder.() -> Unit): Thing {
+    return Thing().copy(block)
+    }
+     */
+
+    private fun createWithFunction(typeName: ClassName): FunSpec {
+        val builderParameter = ParameterSpec.builder(
+                "block",
+                LambdaTypeName.get(ClassName("", "Builder"), returnType = Unit::class.asTypeName())
+        )
+
+        return FunSpec.builder("with")
+                .addParameter(builderParameter.build())
+                .addCode(
+                        CodeBlock.builder()
+                                .addStatement("return %T().copy(block)", typeName)
+                                .build()
+                )
                 .build()
     }
 
