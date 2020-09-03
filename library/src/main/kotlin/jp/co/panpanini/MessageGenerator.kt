@@ -25,8 +25,6 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
                 .addSuperinterface(superInterface)
                 .addSuperinterface(Serializable::class)
 
-        val constructor = FunSpec.constructorBuilder()
-
         type.fields.map { field ->
             val param = when (field) {
                 is File.Field.Standard -> PropertySpec.builder(field.kotlinFieldName, field.kotlinValueType(false)).initializer(field.kotlinFieldName)
@@ -45,16 +43,13 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
             if (!type.mapEntry) {
                 param.defaultValue(field.defaultValue)
             }
-            constructor.addParameter(param.build())
             typeSpec.addProperty(property)
         }
         // unknown fields
        val unknownPropertySpec = unknownFieldSpec()
-        constructor.addParameter(ParameterSpec.builder(unknownPropertySpec.name, unknownPropertySpec.type).defaultValue("emptyMap()").build())
         typeSpec.addProperty(unknownPropertySpec)
 
-        typeSpec.primaryConstructor(constructor.build())
-        typeSpec.addFunction(createSecondaryConstructor(type))
+        typeSpec.primaryConstructor(FunSpec.constructorBuilder().addModifiers(KModifier.PRIVATE).build())
 
         mapEntry?.let {
             typeSpec.addSuperinterface(mapEntry)
@@ -261,7 +256,7 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
                 "unknownFields" ,
                 Map::class.parameterizedBy(Int::class, UnknownField::class)
         )
-                .initializer("unknownFields")
+                .initializer("emptyMap()")
                 .build()
     }
 
