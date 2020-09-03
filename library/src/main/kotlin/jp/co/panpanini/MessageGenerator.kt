@@ -205,7 +205,7 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
                 .build())
 
         val code = CodeBlock.builder()
-                .add("return %T().apply {\n", typeName)
+                .add("return %T().apply·{\n", typeName)
 
         type.fields.map {
             when (it) {
@@ -267,7 +267,7 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
 
         val code = CodeBlock.Builder()
                 .add("return newBuilder()")
-                .beginControlFlow(".apply")
+                .beginControlFlow(".apply·{")
                 .addStatement("block(this)")
                 .endControlFlow()
                 .add(".build()\n")
@@ -288,7 +288,7 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
             .addCode(
                     CodeBlock.Builder()
                             .add("return ")
-                            .addStatement("other is %T &&", typeName)
+                            .addStatement("other is %T ${if (type.fields.isNotEmpty()) "&&" else ""}", typeName)
                             .add(
                                     type.fields.map {
                                         CodeBlock.of("${it.kotlinFieldName} == other.${it.kotlinFieldName}")
@@ -305,12 +305,15 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
                 .addModifiers(KModifier.OVERRIDE)
                 .addCode(
                         CodeBlock.builder()
-                                .addStatement("var result = ${type.fields.first().kotlinFieldName}.hashCode()")
+                                .addStatement("var result = ${type.fields.firstOrNull()?.kotlinFieldName ?: "super"}.hashCode()")
                                 .apply {
-                                    type.fields.takeLast(type.fields.size-1).map {
-                                        "result = 31 * result + ${it.kotlinFieldName}.hashCode()"
+                                    val count = type.fields.size-1
+                                    if (count > 0) {
+                                        type.fields.takeLast(count).map {
+                                            "result = 31 * result + ${it.kotlinFieldName}.hashCode()"
+                                        }
+                                                .forEach { addStatement(it) }
                                     }
-                                    .forEach { addStatement(it) }
                                 }
                                 .addStatement("result = 31 * result + unknownFields.hashCode()")
                                 .addStatement("return result")
@@ -322,7 +325,7 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
     private fun createMessageMergeExtension(type: File.Type.Message, typeName: ClassName): FunSpec {
         val codeBlock = CodeBlock.builder()
                 .add("return ")
-                .addStatement("other?.copy {")
+                .addStatement("other?.copy·{")
                 .indent()
         type.fields.mapNotNull {
             when (it) {
@@ -602,7 +605,7 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
     private fun File.Field.Standard.mapConstructorReference(): CodeBlock {
         return CodeBlock.builder()
                 .addStatement("{ key, value ->")
-                .beginControlFlow("${kotlinQualifiedTypeName}.Builder().apply")
+                .beginControlFlow("${kotlinQualifiedTypeName}.Builder().apply·{")
                 .addStatement("key(key)")
                 .addStatement("value(value)")
                 .endControlFlow()
