@@ -283,7 +283,7 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
     private fun createMessageMergeExtension(type: File.Type.Message, typeName: ClassName): FunSpec {
         val codeBlock = CodeBlock.builder()
                 .add("return ")
-                .addStatement("other?.copy(")
+                .addStatement("other?.copy {")
                 .indent()
         type.fields.mapNotNull {
             when (it) {
@@ -291,11 +291,11 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
                 is File.Field.OneOf -> buildOneOfFieldMerge(it)
             }
         }.forEach {
-            codeBlock.addStatement("$it,")
+            codeBlock.addStatement("$it")
         }
         codeBlock.addStatement("unknownFields = unknownFields + other.unknownFields")
                 .unindent()
-                .add(") ?: this\n")
+                .add("} ?: this\n")
         return FunSpec.builder("protoMergeImpl")
                 .receiver(typeName)
                 .returns(typeName)
