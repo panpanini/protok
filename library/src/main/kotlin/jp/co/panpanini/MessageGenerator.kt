@@ -206,25 +206,25 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
                 .build())
 
         val code = CodeBlock.builder()
-                .add("return %T(", typeName)
+                .add("return %T().apply {\n", typeName)
 
         type.fields.map {
             when (it) {
                 is File.Field.Standard -> {
                     CodeBlock.builder()
-                            .add("${it.kotlinFieldName},·")
+                            .addStatement("${it.kotlinFieldName} = this@Builder.${it.kotlinFieldName}")
                             .build()
                 }
                 is File.Field.OneOf ->
                     CodeBlock.builder()
-                            .add("${it.kotlinFieldName},·")
+                            .addStatement("this@Builder.${it.kotlinFieldName}?.let { ${it.kotlinFieldName} = it }")
                             .build()
             }
         }.forEach {
             code.add(it)
         }
-        code.add("unknownFields")
-                .add(")\n")
+        code.add("unknownFields = this@Builder.unknownFields")
+                .add("\n}\n")
 
         val build = FunSpec.builder("build")
                 .returns(typeName)
