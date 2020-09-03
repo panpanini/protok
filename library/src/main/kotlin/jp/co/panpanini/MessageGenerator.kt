@@ -27,10 +27,14 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
 
         type.fields.map { field ->
             val param = when (field) {
-                is File.Field.Standard -> PropertySpec.builder(field.kotlinFieldName, field.kotlinValueType(false)).initializer(field.kotlinFieldName)
-
-                is File.Field.OneOf -> PropertySpec.builder(field.kotlinFieldName, field.type).initializer(field.kotlinFieldName)
+                is File.Field.Standard -> PropertySpec.builder(field.kotlinFieldName, field.kotlinValueType(false))
+                is File.Field.OneOf -> PropertySpec.builder(field.kotlinFieldName, field.type)
             }
+
+            param.initializer(field.defaultValue)
+                    .setter(FunSpec.setterBuilder().addModifiers(KModifier.PRIVATE).build())
+                    .mutable(true)
+
             if (type.mapEntry) {
                 // add override map entry
                 param.addModifiers(KModifier.OVERRIDE)
