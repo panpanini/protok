@@ -240,6 +240,8 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
                 Map::class.parameterizedBy(Int::class, UnknownField::class)
         )
                 .initializer("emptyMap()")
+                .mutable(true)
+                .setter(FunSpec.setterBuilder().addModifiers(KModifier.PRIVATE).build())
                 .build()
     }
 
