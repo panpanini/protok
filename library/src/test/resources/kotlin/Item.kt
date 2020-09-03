@@ -2,24 +2,19 @@
 // Source file: oneoftest.proto
 package api
 
-import java.io.Serializable
 import jp.co.panpanini.Marshaller
 import jp.co.panpanini.Message
 import jp.co.panpanini.UnknownField
 import jp.co.panpanini.Unmarshaller
-import kotlin.ByteArray
-import kotlin.Int
-import kotlin.String
-import kotlin.collections.Map
-import kotlin.jvm.JvmField
-import kotlin.jvm.JvmStatic
+import java.io.Serializable
 
-data class Item(@JvmField val id: String = "", val unknownFields: Map<Int, UnknownField> =
-        emptyMap()) : Message<Item>, Serializable {
+class Item() : Message<Item>, Serializable {
+    var id: String = ""
+        private set
+    var unknownFields: Map<Int, UnknownField> = emptyMap()
+        private set
     override val protoSize: Int
         get() = protoSizeImpl()
-
-    constructor(id: String) : this(id, emptyMap())
 
     fun Item.protoSizeImpl(): Int {
         var protoSize = 0
@@ -40,13 +35,27 @@ data class Item(@JvmField val id: String = "", val unknownFields: Map<Int, Unkno
         }
     }
 
-    fun Item.protoMergeImpl(other: Item?): Item = other?.copy(
+    fun Item.protoMergeImpl(other: Item?): Item = other?.copy {
         unknownFields = unknownFields + other.unknownFields
-    ) ?: this
+    } ?: this
 
     override fun protoMarshal(marshaller: Marshaller) = protoMarshalImpl(marshaller)
 
     override operator fun plus(other: Item?): Item = protoMergeImpl(other)
+
+    fun copy(block: Builder.() -> Unit): Item = newBuilder().apply {
+        block(this)
+    }
+    .build()
+
+    override fun equals(other: Any?): Boolean = other is Item &&
+    id == other.id
+
+    override fun hashCode(): Int {
+        var result = id.hashCode()
+        result = 31 * result + unknownFields.hashCode()
+        return result
+    }
 
     fun encode(): ByteArray = protoMarshal()
 
@@ -65,7 +74,11 @@ data class Item(@JvmField val id: String = "", val unknownFields: Map<Int, Unkno
             var id = ""
             while (true) {
                 when (protoUnmarshal.readTag()) {
-                    0 -> return Item(id, protoUnmarshal.unknownFields())
+                    0 -> return Builder()
+                            .id(id)
+                            .unknownFields(protoUnmarshal.unknownFields())
+                            .build()
+
                     10 -> id = protoUnmarshal.readString()
                     else -> protoUnmarshal.unknownField()
                 }
@@ -91,6 +104,9 @@ data class Item(@JvmField val id: String = "", val unknownFields: Map<Int, Unkno
             return this
         }
 
-        fun build(): Item = Item(id, unknownFields)
+        fun build(): Item = Item().apply {
+        id = this@Builder.id
+        unknownFields = this@Builder.unknownFields
+        }
     }
 }
