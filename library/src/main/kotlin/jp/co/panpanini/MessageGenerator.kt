@@ -368,7 +368,7 @@ class MessageGenerator(private val file: File, private val kotlinTypeMappings: M
                     .filter { it.type == File.Field.Type.MESSAGE }
                     .forEach {
                         codeBlock.beginControlFlow("this.${field.kotlinFieldName} is ${field.kotlinTypeName}.${it.kotlinFieldName.beginWithUpperCase()} && other.${field.kotlinFieldName} is ${field.kotlinTypeName}.${it.kotlinFieldName.beginWithUpperCase()} ->")
-                                .addStatement("${field.kotlinTypeName}.${it.kotlinFieldName.beginWithUpperCase()}(this.${field.kotlinFieldName}.${it.kotlinFieldName} + other.${field.kotlinFieldName}.${it.kotlinFieldName})")
+                                .addStatement("${field.kotlinTypeName}.${it.kotlinFieldName.beginWithUpperCase()}((this.${field.kotlinFieldName} as ${field.kotlinTypeName}.${it.kotlinFieldName.beginWithUpperCase()}).${it.kotlinFieldName} + (other.${field.kotlinFieldName} as ${field.kotlinTypeName}.${it.kotlinFieldName.beginWithUpperCase()}).${it.kotlinFieldName})")
                                 .endControlFlow()
                     }
             codeBlock.beginControlFlow("else ->")
