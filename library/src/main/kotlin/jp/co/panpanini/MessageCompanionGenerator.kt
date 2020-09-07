@@ -12,6 +12,7 @@ class MessageCompanionGenerator(private val file: File, private val kotlinTypeMa
                 .addSuperinterface(Message.Companion::class.asClassName().parameterizedBy(typeName))
                 .addFunction(createCompanionProtoUnmarshalFunction(type, typeName))
                 .addFunction(createDecodeFunction(typeName))
+                .addFunction(createWithFunction(typeName))
 
         createDefaultConstants(type)
                 .forEach { companion.addProperty(it) }
@@ -49,7 +50,7 @@ class MessageCompanionGenerator(private val file: File, private val kotlinTypeMa
         //TODO: clean this up - its a little difficult to follow. maybe create a function for it
         codeBlock.beginControlFlow("while (true)")
         codeBlock.beginControlFlow("when (${unMarshalParameter.name}.readTag())")
-                .addStatement("0 ->·return·${typeName.simpleName}(${doneKotlinFields.map { "$it" }.joinToString()}${if(doneKotlinFields.isNotEmpty()) ",·" else ""}${unMarshalParameter.name}.unknownFields())")
+                .addStatement("0 ->·return·${createBuilderInitFunction(type.fields, doneKotlinFields)}")
         type.sortedStandardFieldsWithOneOfs().map { (field, oneOf) ->
             val tags = mutableListOf(field.tag)
             val fieldBlock = CodeBlock.builder()
@@ -83,12 +84,50 @@ class MessageCompanionGenerator(private val file: File, private val kotlinTypeMa
         return funSpec.build()
     }
 
+    private fun createBuilderInitFunction(fields: List<File.Field>, doneValue: List<String>): CodeBlock {
+        return CodeBlock.builder()
+                .add("Builder()\n")
+                .apply {
+                    fields.mapIndexed { index, field ->
+                        ".${field.kotlinFieldName}(${doneValue[index]})"
+                    }
+                            .forEach {
+                                addStatement(it)
+                            }
+                }
+                .addStatement(".unknownFields(protoUnmarshal.unknownFields())")
+                .addStatement(".build()")
+                .build()
+    }
+
     private fun createDecodeFunction(typeName: ClassName): FunSpec {
         return FunSpec.builder("decode")
                 .returns(typeName)
                 .addParameter("arr", ByteArray::class)
                 .addAnnotation(JvmStatic::class)
                 .addCode("return protoUnmarshal(arr)\n")
+                .build()
+    }
+
+    /**
+     * fun with(block: Builder.() -> Unit): Thing {
+    return Thing().copy(block)
+    }
+     */
+
+    private fun createWithFunction(typeName: ClassName): FunSpec {
+        val builderParameter = ParameterSpec.builder(
+                "block",
+                LambdaTypeName.get(ClassName("", "Builder"), returnType = Unit::class.asTypeName())
+        )
+
+        return FunSpec.builder("with")
+                .addParameter(builderParameter.build())
+                .addCode(
+                        CodeBlock.builder()
+                                .addStatement("return %T().copy(block)", typeName)
+                                .build()
+                )
                 .build()
     }
 
