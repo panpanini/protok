@@ -1,69 +1,69 @@
 package jp.co.panpanini
 
-class Marshaller(private val stream: Writer) {
+class Marshaller(private val writer: Writer) {
 
     companion object {
         fun allocate(size: Int) = Marshaller(Writer.allocate(size))
     }
 
-    fun writeTag(tag: Int) = this.apply { stream.writeTag(tag) }
+    fun writeTag(tag: Int) = this.apply { writer.writeTag(tag) }
 
-    fun writeTag(fieldNum: Int, wireType: Int) = this.apply { stream.writeTag((fieldNum shl 3) or wireType) }
+    fun writeTag(fieldNum: Int, wireType: Int) = this.apply { writer.writeTag((fieldNum shl 3) or wireType) }
 
     fun writeDouble(value: Double) {
-        stream.writeDouble(value)
+        writer.writeDouble(value)
     }
 
     fun writeFloat(value: Float) {
-        stream.writeFloat(value)
+        writer.writeFloat(value)
     }
 
     fun writeInt32(value: Int) {
-        stream.writeInt32(value)
+        writer.writeInt32(value)
     }
 
     fun writeInt64(value: Long) {
-        stream.writeInt64(value)
+        writer.writeInt64(value)
     }
 
     fun writeUInt32(value: Int) {
-        stream.writeUInt32(value)
+        writer.writeUInt32(value)
     }
 
     fun writeUInt64(value: Long) {
-        stream.writeUInt64(value)
+        writer.writeUInt64(value)
     }
 
     fun writeSInt32(value: Int) {
-        stream.writeSInt32(value)
+        writer.writeSInt32(value)
     }
 
     fun writeSInt64(value: Long) {
-        stream.writeSInt64(value)
+        writer.writeSInt64(value)
     }
 
     fun writeFixed32(value: Int) {
-        stream.writeFixed32(value)
+        writer.writeFixed32(value)
     }
 
     fun writeFixed64(value: Long) {
-        stream.writeFixed64(value)
+        writer.writeFixed64(value)
     }
 
     fun writeSFixed32(value: Int) {
-        stream.writeSFixed32(value)
+        writer.writeSFixed32(value)
     }
 
     fun writeSFixed64(value: Long) {
-        stream.writeSFixed64(value)
+        writer.writeSFixed64(value)
     }
 
     fun writeBool(value: Boolean) {
-        stream.writeBool(value)
+        writer.writeBool(value)
     }
 
     fun writeString(value: String) {
-        stream.writeString(value)
+        writer.writeString(value)
     }
 
     fun writeBytes(value: ByteArr) {
@@ -71,7 +71,7 @@ class Marshaller(private val stream: Writer) {
     }
 
     fun writeBytes(value: ByteArray) {
-        stream.writeBytes(value)
+        writer.writeBytes(value)
     }
 
     fun writeUnknownFields(fields: Map<Int, UnknownField>) {
@@ -98,7 +98,7 @@ class Marshaller(private val stream: Writer) {
         writeInt32(value.value)
     }
 
-    fun complete() = stream.complete()
+    fun complete() = writer.complete()
 
     fun <K, V, T : Message<T>> writeMap(
             tag: Int,

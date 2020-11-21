@@ -11,9 +11,9 @@ import org.mockito.ArgumentMatchers.anyInt
 
 class MarshallerTest {
 
-    private var stream: Writer = mock { }
+    private var writer: Writer = mock { }
 
-    private var target: Marshaller = Marshaller(stream)
+    private var target: Marshaller = Marshaller(writer)
 
     @Test
     fun `writeTag should call stream#writeTag`() {
@@ -21,7 +21,7 @@ class MarshallerTest {
 
         target.writeTag(input)
 
-        verify(stream).writeTag(input)
+        verify(writer).writeTag(input)
     }
 
     @Test
@@ -33,7 +33,7 @@ class MarshallerTest {
         target.writeTag(fieldNum, wireType)
 
 
-        verify(stream).writeTag(fieldNumSHL3 + wireType)
+        verify(writer).writeTag(fieldNumSHL3 + wireType)
     }
 
     @Test
@@ -42,7 +42,7 @@ class MarshallerTest {
 
         target.writeDouble(input)
 
-        verify(stream).writeDouble(input)
+        verify(writer).writeDouble(input)
     }
 
     @Test
@@ -51,7 +51,7 @@ class MarshallerTest {
 
         target.writeFloat(input)
 
-        verify(stream).writeFloat(input)
+        verify(writer).writeFloat(input)
     }
 
     @Test
@@ -60,7 +60,7 @@ class MarshallerTest {
 
         target.writeInt32(input)
 
-        verify(stream).writeInt32(input)
+        verify(writer).writeInt32(input)
     }
 
     @Test
@@ -69,7 +69,7 @@ class MarshallerTest {
 
         target.writeInt64(input)
 
-        verify(stream).writeInt64(input)
+        verify(writer).writeInt64(input)
     }
 
     @Test
@@ -78,7 +78,7 @@ class MarshallerTest {
 
         target.writeUInt32(input)
 
-        verify(stream).writeUInt32(input)
+        verify(writer).writeUInt32(input)
     }
 
     @Test
@@ -87,7 +87,7 @@ class MarshallerTest {
 
         target.writeUInt64(input)
 
-        verify(stream).writeUInt64(input)
+        verify(writer).writeUInt64(input)
     }
 
     @Test
@@ -96,7 +96,7 @@ class MarshallerTest {
 
         target.writeSInt32(input)
 
-        verify(stream).writeSInt32(input)
+        verify(writer).writeSInt32(input)
     }
 
     @Test
@@ -105,7 +105,7 @@ class MarshallerTest {
 
         target.writeSInt64(input)
 
-        verify(stream).writeSInt64(input)
+        verify(writer).writeSInt64(input)
     }
 
     @Test
@@ -114,7 +114,7 @@ class MarshallerTest {
 
         target.writeFixed32(input)
 
-        verify(stream).writeFixed32(input)
+        verify(writer).writeFixed32(input)
     }
 
     @Test
@@ -123,7 +123,7 @@ class MarshallerTest {
 
         target.writeFixed64(input)
 
-        verify(stream).writeFixed64(input)
+        verify(writer).writeFixed64(input)
     }
 
     @Test
@@ -132,7 +132,7 @@ class MarshallerTest {
 
         target.writeSFixed32(input)
 
-        verify(stream).writeSFixed32(input)
+        verify(writer).writeSFixed32(input)
     }
 
     @Test
@@ -141,7 +141,7 @@ class MarshallerTest {
 
         target.writeSFixed64(input)
 
-        verify(stream).writeSFixed64(input)
+        verify(writer).writeSFixed64(input)
     }
 
     @Test
@@ -150,7 +150,7 @@ class MarshallerTest {
 
         target.writeBool(input)
 
-        verify(stream).writeBool(input)
+        verify(writer).writeBool(input)
     }
 
     @Test
@@ -159,7 +159,7 @@ class MarshallerTest {
 
         target.writeString("")
 
-        verify(stream).writeString(input)
+        verify(writer).writeString(input)
     }
 
     @Test
@@ -181,7 +181,7 @@ class MarshallerTest {
 
         target.writeBytes(input)
 
-        verify(stream).writeBytes(input)
+        verify(writer).writeBytes(input)
     }
 
     @Test
@@ -213,7 +213,7 @@ class MarshallerTest {
     fun `complete should call writer#complete`() {
         target.complete()
 
-        verify(stream).complete()
+        verify(writer).complete()
     }
 
     @Test
