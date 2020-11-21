@@ -18,6 +18,7 @@ class Writer(private val byteArray: ByteArray) {
         }
     }
 
+    // bytes are written in smallest to largest order
     fun writeUInt32(value: Int) {
         var value = value
         while (true) {
@@ -31,10 +32,12 @@ class Writer(private val byteArray: ByteArray) {
         }
     }
 
+    // bytes are written in smallest to largest order
     fun writeInt64(value: Long) {
         writeUInt64(value)
     }
 
+    // bytes are written in smallest to largest order
     fun writeUInt64(value: Long) {
         var value = value
         while (true) {
@@ -48,6 +51,7 @@ class Writer(private val byteArray: ByteArray) {
         }
     }
 
+    // bytes are written in smallest to largest order
     fun writeFixed32(value: Int) {
         byteArray[position++] = (value and 0xFF).toByte()
         byteArray[position++] = (value shr 8 and 0xFF).toByte()
@@ -55,6 +59,7 @@ class Writer(private val byteArray: ByteArray) {
         byteArray[position++] = (value shr 24 and 0xFF).toByte()
     }
 
+    // bytes are written in smallest to largest order
     fun writeFixed64(value: Long) {
         byteArray[position++] = (value and 0xFF).toByte()
         byteArray[position++] = (value shr 8 and 0xFF).toByte()
