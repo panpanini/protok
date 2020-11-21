@@ -1,4 +1,3 @@
-import com.google.protobuf.CodedOutputStream
 import com.nhaarman.mockitokotlin2.mock
 import com.nhaarman.mockitokotlin2.spy
 import com.nhaarman.mockitokotlin2.verify
@@ -6,26 +5,23 @@ import com.nhaarman.mockitokotlin2.whenever
 import jp.co.panpanini.ByteArr
 import jp.co.panpanini.Marshaller
 import jp.co.panpanini.Message
-import org.assertj.core.api.Assertions.assertThat
+import jp.co.panpanini.Writer
 import org.junit.Test
 import org.mockito.ArgumentMatchers.anyInt
 
 class MarshallerTest {
 
+    private var stream: Writer = mock { }
 
-    private var stream: CodedOutputStream = mock { }
-
-    private var bytes: ByteArray? = ByteArray(0)
-
-    private var target: Marshaller = Marshaller(stream, bytes)
+    private var target: Marshaller = Marshaller(stream)
 
     @Test
-    fun `writeTag should call stream#writeInt32NoTag`() {
+    fun `writeTag should call stream#writeTag`() {
         val input = 100
 
         target.writeTag(input)
 
-        verify(stream).writeInt32NoTag(input)
+        verify(stream).writeTag(input)
     }
 
     @Test
@@ -37,133 +33,133 @@ class MarshallerTest {
         target.writeTag(fieldNum, wireType)
 
 
-        verify(stream).writeInt32NoTag(fieldNumSHL3 + wireType)
+        verify(stream).writeTag(fieldNumSHL3 + wireType)
     }
 
     @Test
-    fun `writeDouble should call stream#writeDoubleNoTag`() {
+    fun `writeDouble should call stream#writeDouble`() {
         val input = 1.0
 
         target.writeDouble(input)
 
-        verify(stream).writeDoubleNoTag(input)
+        verify(stream).writeDouble(input)
     }
 
     @Test
-    fun `writeFloat should call stream#writeFloatNoTag`() {
+    fun `writeFloat should call stream#writeFloat`() {
         val input = 1f
 
         target.writeFloat(input)
 
-        verify(stream).writeFloatNoTag(input)
+        verify(stream).writeFloat(input)
     }
 
     @Test
-    fun `writeInt32 should call stream#writeInt32NoTag`() {
+    fun `writeInt32 should call stream#writeInt32`() {
         val input = 1
 
         target.writeInt32(input)
 
-        verify(stream).writeInt32NoTag(input)
+        verify(stream).writeInt32(input)
     }
 
     @Test
-    fun `writeInt64 should call stream#writeInt64NoTag`() {
+    fun `writeInt64 should call stream#writeInt64`() {
         val input = 1L
 
         target.writeInt64(input)
 
-        verify(stream).writeInt64NoTag(input)
+        verify(stream).writeInt64(input)
     }
 
     @Test
-    fun `writeUInt32 should call stream#writeUInt32NoTag`() {
+    fun `writeUInt32 should call stream#writeUInt32`() {
         val input = 1
 
         target.writeUInt32(input)
 
-        verify(stream).writeUInt32NoTag(input)
+        verify(stream).writeUInt32(input)
     }
 
     @Test
-    fun `writeUInt64 should call stream#writeUInt64NoTag`() {
+    fun `writeUInt64 should call stream#writeUInt64`() {
         val input = 1L
 
         target.writeUInt64(input)
 
-        verify(stream).writeUInt64NoTag(input)
+        verify(stream).writeUInt64(input)
     }
 
     @Test
-    fun `writeSInt32 should call stream#writeSInt32NoTag`() {
+    fun `writeSInt32 should call stream#writeSInt32`() {
         val input = 1
 
         target.writeSInt32(input)
 
-        verify(stream).writeSInt32NoTag(input)
+        verify(stream).writeSInt32(input)
     }
 
     @Test
-    fun `writeSInt64 should call stream#writeSInt64NoTag`() {
+    fun `writeSInt64 should call stream#writeSInt64`() {
         val input = 1L
 
         target.writeSInt64(input)
 
-        verify(stream).writeSInt64NoTag(input)
+        verify(stream).writeSInt64(input)
     }
 
     @Test
-    fun `writeFixed32 should call stream#writeFixed32NoTag`() {
+    fun `writeFixed32 should call stream#writeFixed32`() {
         val input = 1
 
         target.writeFixed32(input)
 
-        verify(stream).writeFixed32NoTag(input)
+        verify(stream).writeFixed32(input)
     }
 
     @Test
-    fun `writeFixed64 should call stream#writeFixed64NoTag`() {
+    fun `writeFixed64 should call stream#writeFixed64`() {
         val input = 1L
 
         target.writeFixed64(input)
 
-        verify(stream).writeFixed64NoTag(input)
+        verify(stream).writeFixed64(input)
     }
 
     @Test
-    fun `writeSFixed32 should call stream#writeSFixed32NoTag`() {
+    fun `writeSFixed32 should call stream#writeSFixed32`() {
         val input = 1
 
         target.writeSFixed32(input)
 
-        verify(stream).writeSFixed32NoTag(input)
+        verify(stream).writeSFixed32(input)
     }
 
     @Test
-    fun `writeSFixed64 should call stream#writeSFixed64NoTag`() {
+    fun `writeSFixed64 should call stream#writeSFixed64`() {
         val input = 1L
 
         target.writeSFixed64(input)
 
-        verify(stream).writeSFixed64NoTag(input)
+        verify(stream).writeSFixed64(input)
     }
 
     @Test
-    fun `writeBool should call stream#writeBoolNoTag`() {
+    fun `writeBool should call stream#writeBool`() {
         val input = true
 
         target.writeBool(input)
 
-        verify(stream).writeBoolNoTag(input)
+        verify(stream).writeBool(input)
     }
 
     @Test
-    fun `writeString should call stream#writeStringNoTag`() {
+    fun `writeString should call stream#writeString`() {
         val input = ""
 
         target.writeString("")
 
-        verify(stream).writeStringNoTag(input)
+        verify(stream).writeString(input)
     }
 
     @Test
@@ -180,12 +176,12 @@ class MarshallerTest {
     }
 
     @Test
-    fun `writeBytes should call stream#writeByteArrayNoTag`() {
+    fun `writeBytes should call stream#writeByteArray`() {
         val input = ByteArray(0)
 
         target.writeBytes(input)
 
-        verify(stream).writeByteArrayNoTag(input)
+        verify(stream).writeBytes(input)
     }
 
     @Test
@@ -214,11 +210,10 @@ class MarshallerTest {
     }
 
     @Test
-    fun `complete should return the byte array`() {
+    fun `complete should call writer#complete`() {
+        target.complete()
 
-        val result = target.complete()
-
-        assertThat(result).isEqualTo(bytes)
+        verify(stream).complete()
     }
 
     @Test
