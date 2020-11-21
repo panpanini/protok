@@ -231,4 +231,20 @@ class WriterTest {
         assertThat(byteArray).isEqualTo(expected)
     }
 
+    @Test
+    fun `writeFixed32 should write 4 bytes exactly`() {
+        setup(4)
+        val input = 2140483647
+        val expected = byteArrayOf(
+                0b00111111.toByte(),
+                0b00110000.toByte(),
+                0b10010101.toByte(),
+                0b01111111.toByte()
+        )
+
+        target.writeFixed32(input)
+
+        assertThat(byteArray).isEqualTo(expected)
+    }
+
 }
