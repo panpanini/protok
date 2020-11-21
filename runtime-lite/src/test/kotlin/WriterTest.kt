@@ -154,4 +154,32 @@ class WriterTest {
         assertThat(target.complete()).isSameAs(byteArray)
     }
 
+    @Test
+    fun `writeUInt32 should write 7bit integer in 1 byte`() {
+        setup(1)
+        val input = 127 // largest 7-bit integer
+        val expected = byteArrayOf(input.toByte())
+
+        target.writeUInt32(input)
+
+        assertThat(byteArray).isEqualTo(expected)
+    }
+
+    @Test
+    fun `writeUInt32 should write 32-bit integer in 5 bytes`() {
+        setup(5)
+        val input = Integer.MAX_VALUE // largest 32-bit integer
+        val expected = byteArrayOf(
+                0b11111111.toByte(),
+                0b11111111.toByte(),
+                0b11111111.toByte(),
+                0b11111111.toByte(),
+                0b00000111.toByte()
+        )
+
+        target.writeUInt32(input)
+
+        assertThat(byteArray).isEqualTo(expected)
+    }
+
 }
