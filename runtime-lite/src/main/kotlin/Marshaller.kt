@@ -1,71 +1,69 @@
 package jp.co.panpanini
 
-import com.google.protobuf.CodedOutputStream
-
-class Marshaller(private val stream: CodedOutputStream, private val bytes: ByteArray? = null) {
+class Marshaller internal constructor(private val writer: Writer) {
 
     companion object {
-        fun allocate(size: Int) = ByteArray(size).let { Marshaller(CodedOutputStream.newInstance(it), it) }
+        fun allocate(size: Int) = Marshaller(Writer.allocate(size))
     }
 
-    fun writeTag(tag: Int) = this.apply { stream.writeInt32NoTag(tag) }
+    fun writeTag(tag: Int) = this.apply { writer.writeTag(tag) }
 
-    fun writeTag(fieldNum: Int, wireType: Int) = this.apply { stream.writeInt32NoTag((fieldNum shl 3) or wireType) }
+    fun writeTag(fieldNum: Int, wireType: Int) = this.apply { writer.writeTag((fieldNum shl 3) or wireType) }
 
     fun writeDouble(value: Double) {
-        stream.writeDoubleNoTag(value)
+        writer.writeDouble(value)
     }
 
     fun writeFloat(value: Float) {
-        stream.writeFloatNoTag(value)
+        writer.writeFloat(value)
     }
 
     fun writeInt32(value: Int) {
-        stream.writeInt32NoTag(value)
+        writer.writeInt32(value)
     }
 
     fun writeInt64(value: Long) {
-        stream.writeInt64NoTag(value)
+        writer.writeInt64(value)
     }
 
     fun writeUInt32(value: Int) {
-        stream.writeUInt32NoTag(value)
+        writer.writeUInt32(value)
     }
 
     fun writeUInt64(value: Long) {
-        stream.writeUInt64NoTag(value)
+        writer.writeUInt64(value)
     }
 
     fun writeSInt32(value: Int) {
-        stream.writeSInt32NoTag(value)
+        writer.writeSInt32(value)
     }
 
     fun writeSInt64(value: Long) {
-        stream.writeSInt64NoTag(value)
+        writer.writeSInt64(value)
     }
 
     fun writeFixed32(value: Int) {
-        stream.writeFixed32NoTag(value)
+        writer.writeFixed32(value)
     }
 
     fun writeFixed64(value: Long) {
-        stream.writeFixed64NoTag(value)
+        writer.writeFixed64(value)
     }
 
     fun writeSFixed32(value: Int) {
-        stream.writeSFixed32NoTag(value)
+        writer.writeSFixed32(value)
     }
 
     fun writeSFixed64(value: Long) {
-        stream.writeSFixed64NoTag(value)
+        writer.writeSFixed64(value)
     }
 
     fun writeBool(value: Boolean) {
-        stream.writeBoolNoTag(value)
+        writer.writeBool(value)
     }
 
     fun writeString(value: String) {
-        stream.writeStringNoTag(value)
+        writer.writeString(value)
     }
 
     fun writeBytes(value: ByteArr) {
@@ -73,7 +71,7 @@ class Marshaller(private val stream: CodedOutputStream, private val bytes: ByteA
     }
 
     fun writeBytes(value: ByteArray) {
-        stream.writeByteArrayNoTag(value)
+        writer.writeBytes(value)
     }
 
     fun writeUnknownFields(fields: Map<Int, UnknownField>) {
@@ -100,7 +98,7 @@ class Marshaller(private val stream: CodedOutputStream, private val bytes: ByteA
         writeInt32(value.value)
     }
 
-    fun complete() = bytes
+    fun complete() = writer.complete()
 
     fun <K, V, T : Message<T>> writeMap(
             tag: Int,
