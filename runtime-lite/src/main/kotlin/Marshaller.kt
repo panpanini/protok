@@ -1,6 +1,6 @@
 package jp.co.panpanini
 
-class Marshaller(private val writer: Writer) {
+class Marshaller internal constructor(private val writer: Writer) {
 
     companion object {
         fun allocate(size: Int) = Marshaller(Writer.allocate(size))
