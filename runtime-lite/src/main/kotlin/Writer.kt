@@ -1,6 +1,8 @@
 package jp.co.panpanini
 
-class Writer(private val byteArray: ByteArray) {
+import Utf8
+
+internal class Writer(private val byteArray: ByteArray, private val utf8: Utf8 = Utf8) {
 
     private var position = 0
 
@@ -111,12 +113,12 @@ class Writer(private val byteArray: ByteArray) {
         val oldPosition = position
         // UTF-8 byte length of the string is at least its UTF-16 code unit length (value.length()),
         // and at most 3 times of it. We take advantage of this in both branches below.
-        val maxLength: Int = value.length * Utf8.MAX_BYTES_PER_CHAR
+        val maxLength: Int = value.length * utf8.MAX_BYTES_PER_CHAR
         val maxLengthVarIntSize: Int = computeUInt32Size(maxLength)
         val minLengthVarIntSize: Int = computeUInt32Size(value.length)
         if (minLengthVarIntSize == maxLengthVarIntSize) {
             position = oldPosition + minLengthVarIntSize
-            val newPosition: Int = Utf8.encode(value, byteArray, position, spaceLeft())
+            val newPosition: Int = utf8.encode(value, byteArray, position, spaceLeft())
             // Since this class is stateful and tracks the position, we rewind and store the state,
             // prepend the length, then reset it back to the end of the string.
             position = oldPosition
@@ -124,9 +126,9 @@ class Writer(private val byteArray: ByteArray) {
             writeUInt32(length)
             position = newPosition
         } else {
-            val length: Int = Utf8.encodedLength(value)
+            val length: Int = utf8.encodedLength(value)
             writeUInt32(length)
-            position = Utf8.encode(value, byteArray, position, spaceLeft())
+            position = utf8.encode(value, byteArray, position, spaceLeft())
         }
     }
 
