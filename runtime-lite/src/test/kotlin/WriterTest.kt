@@ -1,12 +1,16 @@
 package jp.co.panpanini
 
-import com.nhaarman.mockitokotlin2.spy
-import com.nhaarman.mockitokotlin2.verify
+import Utf8
+import com.nhaarman.mockitokotlin2.*
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Before
 import org.junit.Test
+import org.mockito.ArgumentMatchers.anyInt
+import org.mockito.ArgumentMatchers.anyString
 
 class WriterTest {
+
+    private val utf8: Utf8 = mock { }
 
     private lateinit var byteArray: ByteArray
 
@@ -16,7 +20,7 @@ class WriterTest {
     @Before
     fun setup() {
         byteArray = ByteArray(100)
-        target = spy(Writer(byteArray))
+        target = spy(Writer(byteArray, utf8))
     }
 
     fun setup(size: Int) {
@@ -265,6 +269,29 @@ class WriterTest {
         target.writeFixed64(input)
 
         assertThat(byteArray).isEqualTo(expected)
+    }
+
+    @Test
+    fun `writeString should call utf8#encode`() {
+        val input = "Hello, World!"
+        val computedLength = 13
+
+        whenever(utf8.encode(anyString(), any(), anyInt(), anyInt())).thenReturn(computedLength)
+
+        target.writeString(input)
+
+        verify(target).writeUInt32(computedLength - 1) // string length int is 1 byte
+        verify(utf8).encode(input, byteArray, 1, 99)
+    }
+
+    @Test
+    fun `writeString should call utf8#encodedLength for a long string`() {
+        val input = (0..1000).joinToString { "test$it " }
+
+        target.writeString(input)
+
+        verify(utf8).encodedLength(input) // ask utf8 for the right length
+        verify(utf8).encode(input, byteArray, 1, 99)
     }
 
 }
