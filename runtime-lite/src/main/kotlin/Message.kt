@@ -1,13 +1,12 @@
 package jp.co.panpanini
 
-import com.google.protobuf.CodedInputStream
 import java.io.InputStream
 import java.io.Serializable
 
 interface Message<T : Message<T>> : Serializable {
     fun protoUnmarshal(u: Unmarshaller): T
     fun protoUnmarshal(arr: ByteArray) = protoUnmarshal(Unmarshaller.fromByteArray(arr))
-    fun protoUnmarshal(inputStream: InputStream) = protoUnmarshal(Unmarshaller(CodedInputStream.newInstance(inputStream)))
+    fun protoUnmarshal(inputStream: InputStream) = protoUnmarshal(Unmarshaller(Reader(inputStream.readBytes())))
 
     operator fun plus(other: T?): T
     val protoSize: Int
