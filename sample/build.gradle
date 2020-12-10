@@ -1,0 +1,29 @@
+plugins {
+    id 'java'
+    id 'org.jetbrains.kotlin.jvm'
+}
+
+version '1.0.0'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib"
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+
+    implementation project(":runtime-lite")
+}
+
+task generateProto(type: Exec) {
+    dependsOn(":library:installDist")
+    commandLine(
+            'protoc',
+            "--plugin=protoc-gen-custom=${rootDir}/library/build/install/protoc-gen-kotlin/bin/protoc-gen-kotlin",
+            "--custom_out=${projectDir}/src/main/kotlin/",
+            "--proto_path=${projectDir}/src/main/proto/",
+            "user.proto"
+    )
+
+}
