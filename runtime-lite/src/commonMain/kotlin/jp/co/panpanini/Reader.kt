@@ -510,7 +510,7 @@ class Reader(private val byteArray: ByteArray) {
      * nothing is skipped.  Otherwise, returns `true`.
      */
     fun skipField(tag: Int): Boolean {
-        return when (com.google.protobuf.WireFormat.getTagWireType(tag)) {
+        return when (WireFormat.getTagWireType(tag)) {
             WireFormat.WIRETYPE_VARINT -> {
                 skipRawVarint()
                 true
