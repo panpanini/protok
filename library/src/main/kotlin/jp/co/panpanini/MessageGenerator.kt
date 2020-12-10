@@ -5,7 +5,6 @@ import com.improve_future.case_changer.toSnakeCase
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import pbandk.gen.File
-import java.io.Serializable
 
 class MessageGenerator(private val file: File, private val kotlinTypeMappings: Map<String, String>) {
 
