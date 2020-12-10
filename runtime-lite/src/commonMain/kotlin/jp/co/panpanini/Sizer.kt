@@ -1,6 +1,5 @@
 package jp.co.panpanini
 
-import com.google.protobuf.CodedOutputStream
 
 object Sizer {
     fun tagSize(fieldNum: Int): Int {
@@ -48,7 +47,30 @@ object Sizer {
 
     fun int64Size(value: Long) = uInt64Size(value)
 
-    fun uInt64Size(value: Long) = CodedOutputStream.computeUInt64SizeNoTag(value)
+    fun uInt64Size(value: Long): Int {
+         var value = value
+        // handle two popular special cases up front ...
+        if (value and (0L.inv() shl 7) == 0L) {
+            return 1
+        }
+        if (value < 0L) {
+            return 10
+        }
+        // ... leaving us with 8 remaining, which we can divide and conquer
+        var n = 2
+        if (value and (0L.inv() shl 35) != 0L) {
+            n += 4
+            value = value ushr 28
+        }
+        if (value and (0L.inv() shl 21) != 0L) {
+            n += 2
+            value = value ushr 14
+        }
+        if (value and (0L.inv() shl 14) != 0L) {
+            n += 1
+        }
+        return n
+    }
 
     fun bytesSize(value: ByteArray) = uInt32Size(value.size) + value.size
 
@@ -72,7 +94,7 @@ object Sizer {
 
     fun boolSize(value: Boolean) = 1
 
-    fun stringSize(value: String) = CodedOutputStream.computeStringSizeNoTag(value)
+    fun stringSize(value: String) = try { Utf8.encodedLength(value) } catch(e: Exception) { value.toByteArray().size }
 
     private fun Int.zigZagEncode() = (this shl 1) xor (this shr 31)
     private fun Long.zigZagEncode() = (this shl 1) xor (this shr 63)
