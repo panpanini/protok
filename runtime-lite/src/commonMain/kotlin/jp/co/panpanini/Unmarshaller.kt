@@ -54,7 +54,7 @@ class Unmarshaller(private val reader: Reader, private val discardUnknownFields:
         }
         val message = companion.protoUnmarshal(this)
         require(reader.isAtEnd) {
-            "Unable to completely read stream for message ${message::class.java}"
+            "Unable to completely read stream for message ${message::class}"
         }
         reader.popLimit(previousLimit)
         currentUnknownFields = unknownFields
@@ -87,9 +87,9 @@ class Unmarshaller(private val reader: Reader, private val discardUnknownFields:
     }
 
     fun <T: Message<T>> readRepeatedMessage(
-            appendTo: List<T>?,
-            companion: Message.Companion<T>,
-            neverPacked: Boolean
+        appendTo: List<T>?,
+        companion: Message.Companion<T>,
+        neverPacked: Boolean
     ): List<T> {
         return readRepeated(appendTo, neverPacked) {
             readMessage(companion)
